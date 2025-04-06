@@ -30,7 +30,7 @@
 #include <iostream>
 
 
-#define app Application::getInstance()
+#define glApp Application::getInstance()
 
 class GLFWwindow;
 
@@ -52,6 +52,8 @@ public:
 	bool update();
 
 	void destroy();
+
+	GLFWwindow* getWindow() const { return mWindow; }
 
 
 	uint32_t getWidth()const { return mWidth; }
