@@ -17,6 +17,7 @@
 #include "glframework/geometry.h"
 #include "glframework/material/phongMaterial.h"
 #include "glframework/material/whiteMaterial.h"
+#include "glframework/material/depthMaterial.h"
 #include "glframework/mesh.h"
 #include "glframework/renderer/renderer.h"
 #include "glframework/light/pointLight.h"
@@ -133,7 +134,7 @@ void prepareCamera() {
 		60.0f,
 		(float)glApp->getWidth() / (float)glApp->getHeight(),
 		0.1f,
-		1000.0f
+		50.0f
 	);
 
 	cameraControl = new GameCameraControl();
@@ -141,7 +142,7 @@ void prepareCamera() {
 	cameraControl->setSensitivity(0.4f);
 }
 
-
+ 
 void prepare() {
 	/*
 	demo: 创建两个球
@@ -173,10 +174,73 @@ void prepare() {
 	renderer = new Renderer();
 	scene = new Scene();
 
-	auto testModel = AssimpLoader::load("assets/fbx/Fist Fight B.fbx");
-	testModel->setScale(glm::vec3(0.1f));
-	scene->addChild(testModel); 
+	//auto testModel = AssimpLoader::load("assets/fbx/bag/backpack.obj");
+	//testModel->setScale(glm::vec3(0.01f));
+	//scene->addChild(testModel);  
 
+	//深度写入test
+	//auto geometry = Geometry::createPlane(6.0f, 9.0f);
+	//auto materialA = new PhongMaterial();
+	//materialA->mDiffuse = new Texture("assets/textures/goku.jpg", 0);
+	//auto meshA = new Mesh(geometry, materialA);
+	//meshA->rotateX(-88.0f);
+	//scene->addChild(meshA);
+
+	//auto materialB = new PhongMaterial();
+	//materialB->mDiffuse = new Texture("assets/textures/box.png", 0);
+	////materialB->mDepthWrite = false;//禁止深度写入
+	//materialB->mPolygonOffset = true;//zfighting
+	//materialB->mFactor = 1.0f;
+	//materialB->mUnit = 1.0f;
+	//auto meshB = new Mesh(geometry, materialB);
+	//meshB->setPosition(glm::vec3(0.0f, 0.5f, -0.0005f));
+	//meshB->rotateX(-88.0f);
+
+	//scene->addChild(meshB);
+
+	/*auto materialC = new PhongMaterial();
+	materialC->mDiffuse = new Texture("assets/textures/earth.png", 0);
+	auto meshC = new Mesh(geometry, materialC);
+	meshC->setPosition(glm::vec3(4.0f, 1.0f, -2.0f));
+	scene->addChild(meshC);*/
+
+	//------------------A方块的实体与边界-----------------
+	//1 创建一个普通方块
+	auto geometryA = Geometry::createBox(4.0f);
+	auto materialA = new PhongMaterial();
+	materialA->mDiffuse = new Texture("assets/textures/goku.jpg", 0);
+	auto meshA = new Mesh(geometryA, materialA);
+
+	scene->addChild(meshA);
+
+
+	//2 创建一个勾边方块
+	auto materialABound = new WhiteMaterial();
+	materialABound->mDepthTest = false;
+	auto meshABound = new Mesh(geometryA, materialABound);
+	meshABound->setPosition(meshA->getPosition());
+	meshABound->setScale(glm::vec3(1.2f));
+	scene->addChild(meshABound);
+
+
+	//------------------B方块的实体与边界-----------------
+	//1 创建一个普通方块
+	auto geometryB = Geometry::createBox(4.0f);
+	auto materialB = new PhongMaterial();
+	materialB->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
+	auto meshB = new Mesh(geometryB, materialB);
+	meshB->setPosition(glm::vec3(3.0f, 1.0f, 1.0f));
+
+	scene->addChild(meshB);
+	//2 创建一个勾边方块
+	auto materialBBound = new WhiteMaterial();
+	materialBBound->mDepthTest = false;
+	auto meshBBound = new Mesh(geometryA, materialBBound);
+	meshBBound->setPosition(meshB->getPosition());
+	meshBBound->setScale(glm::vec3(1.2f));
+	scene->addChild(meshBBound);
+
+	 
 
 	////1 创建geometry
 	//auto geometry = Geometry::createBox(1.0f);
@@ -201,6 +265,7 @@ void prepare() {
 	//方向光
 	dirLight = new DirectionalLight();
 	dirLight->mDirection = glm::vec3(-1.0f);
+	dirLight->mSpecularIntensity = 0.1f;
 	
 	//环境光
 	ambLight = new AmbientLight();

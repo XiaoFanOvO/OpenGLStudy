@@ -5,6 +5,7 @@
 
 std::map<std::string, Texture*> Texture::mTextureCache{}; //对静态map的实现
 
+//从硬盘进行纹理读取
 Texture* Texture::createTexture(const std::string& path, unsigned int unit) {
 	//1 检查是否缓存过本路径对应的纹理对象
 	auto iter = mTextureCache.find(path);
@@ -19,6 +20,7 @@ Texture* Texture::createTexture(const std::string& path, unsigned int unit) {
 	return texture;
 }
 
+//从内存中进行纹理读取
 Texture* Texture::createTextureFromMemory(
 	const std::string& path,
 	unsigned int unit,
@@ -77,7 +79,6 @@ Texture::Texture(const std::string& path, unsigned int unit) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
 }
-
 //dataIn是整张图片的原始的信息,还没有经过解析
 Texture::Texture(unsigned int unit, unsigned char* dataIn, uint32_t widthIn, uint32_t heightIn) {
 	mUnit = unit;

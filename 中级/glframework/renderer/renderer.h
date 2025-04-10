@@ -58,5 +58,6 @@ private:
 	//根据材质类型的不同,挑选使用哪一个shader对象
 	Shader* mPhongShader{ nullptr };
 	Shader* mWhiteShader{ nullptr };
+	Shader* mDepthShader{ nullptr };
 };
 

@@ -28,6 +28,8 @@ uniform vec3 cameraPosition;
 
 uniform float shiness;
 
+
+
 //三种光源的封装
 struct DirectionalLight{
 	vec3 direction;
@@ -77,9 +79,9 @@ vec3 calculateSpecular(vec3 lightColor, vec3 lightDir, vec3 normal, vec3 viewDir
 	float specular = clamp(dot(lightReflect, -viewDir),0.0,1.0);
 	//3 计算光斑
 	specular = pow(specular, shiness);
-	//float sepcularMask = texture(specularMaskSampler, uv).r; //高光贴图,需要再点开
+	float sepcularMask = texture(specularMaskSampler, uv).r; //高光贴图,需要再点开
 	//4 计算最终颜色
-	vec3 specularColor = lightColor * specular * flag * intensity;
+	vec3 specularColor = lightColor * specular * flag * intensity * sepcularMask;
 	return specularColor;
 }
 
@@ -152,5 +154,11 @@ void main()
 	//环境光
 	vec3 ambientColor = objectColor * ambientColor;
 	vec3 finalColor = result  + ambientColor;
+
+	//屏幕两分色
+	//float flag = step(800, gl_FragCoord.x); //屏幕横坐标与800做对比
+	//vec3 blendColor = mix(vec3(1.0,0.0,0.0), vec3(0.0, 0.0, 1.0), flag);//用flag做一个颜色混合
+	//finalColor *= blendColor;
+	
 	FragColor = vec4(finalColor, 1.0);
 }
