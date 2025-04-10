@@ -1,3 +1,4 @@
+
 #version 460 core
 out vec4 FragColor;
 
@@ -153,6 +154,7 @@ void main()
 
 	//环境光
 	vec3 ambientColor = objectColor * ambientColor;
+	float alpha = texture(sampler, uv).a;
 	vec3 finalColor = result  + ambientColor;
 
 	//屏幕两分色
@@ -160,5 +162,5 @@ void main()
 	//vec3 blendColor = mix(vec3(1.0,0.0,0.0), vec3(0.0, 0.0, 1.0), flag);//用flag做一个颜色混合
 	//finalColor *= blendColor;
 	
-	FragColor = vec4(finalColor, 1.0);
+	FragColor = vec4(finalColor, 0.3);
 }

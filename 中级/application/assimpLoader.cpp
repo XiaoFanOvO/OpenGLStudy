@@ -114,7 +114,7 @@ Mesh* AssimpLoader::processMesh(aiMesh* aimesh, const aiScene* scene, const std:
 
 	auto geometry = new Geometry(positions, normals, uvs, indices);
 	auto material = new PhongMaterial();
-	//material->mDiffuse = new Texture("assets/textures/box.png", 0);
+	material->mDepthWrite = false;
 	//进行纹理读取
 	if (aimesh->mMaterialIndex >= 0)
 	{

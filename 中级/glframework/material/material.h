@@ -27,6 +27,18 @@ public:
 	unsigned int mPolygonOffsetType{ GL_POLYGON_OFFSET_FILL };
 	float mFactor{ 0.0f };
 	float mUnit{ 0.0f };
+
+	//stencil相关
+	bool mStencilTest{ false };
+	unsigned int mSFail{ GL_KEEP };//模板测试失败了怎么办
+	unsigned int mZFail{ GL_KEEP };//模板测试通过但是深度测试没通过怎么办
+	unsigned int mZPass{ GL_KEEP };//模板+深度测试都通过了怎么办
+
+	unsigned int mStencilMask{ 0xff };//用于控制模板写入
+
+	unsigned int mStencilFunc{ GL_ALWAYS };
+	unsigned int mStencilRef{ 0 };
+	unsigned int mStencilFuncMask{ 0xff };
 	
 };
 

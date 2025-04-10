@@ -144,123 +144,116 @@ void prepareCamera() {
 
  
 void prepare() {
-	/*
-	demo: 创建两个球
-	renderer = new Renderer();
-	//1 创建geometry
-	auto geometry  = Geometry::createSphere(1.5f);
-
-	//2 创建material材质并且配置参数
-	auto material01 = new PhongMaterial();
-	material01->mShiness = 32.0f;
-	material01->mDiffuse = new Texture("assets/textures/goku.jpg", 0);
-
-	auto material02 = new PhongMaterial();
-	material02->mShiness = 32.0f;
-	material02->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
-
-	//3 创建mesh
-	auto mesh01 = new Mesh(geometry, material01);
-	auto mesh02 = new Mesh(geometry, material02);
-	mesh02->setPosition(glm::vec3(3.0f, 0.0f, 0.0f));
-
-	meshes.push_back(mesh01);
-	meshes.push_back(mesh02);
-
-	dirLight = new DirectionalLight();
-	ambLight = new AmbientLight();
-	ambLight->mColor = glm::vec3(0.1f);
-	*/
 	renderer = new Renderer();
 	scene = new Scene();
 
-	//auto testModel = AssimpLoader::load("assets/fbx/bag/backpack.obj");
-	//testModel->setScale(glm::vec3(0.01f));
-	//scene->addChild(testModel);  
-
-	//深度写入test
-	//auto geometry = Geometry::createPlane(6.0f, 9.0f);
+	////------------------A方块的实体与边界-----------------
+	////1 创建一个普通方块
+	//auto geometryA = Geometry::createBox(4.0f);
 	//auto materialA = new PhongMaterial();
 	//materialA->mDiffuse = new Texture("assets/textures/goku.jpg", 0);
-	//auto meshA = new Mesh(geometry, materialA);
-	//meshA->rotateX(-88.0f);
+	//materialA->mStencilTest = true;
+	////模板测试后的结果写入
+	//materialA->mSFail = GL_KEEP;
+	//materialA->mZFail = GL_KEEP;
+	//materialA->mZPass = GL_REPLACE;
+	////控制写入
+	//materialA->mStencilMask = 0xff;
+	////模板测试规则
+	//materialA->mStencilFunc = GL_ALWAYS;
+	//materialA->mStencilRef = 1;
+	//materialA->mStencilFuncMask = 0xff;
+
+	//auto meshA = new Mesh(geometryA, materialA);
 	//scene->addChild(meshA);
 
-	//auto materialB = new PhongMaterial();
-	//materialB->mDiffuse = new Texture("assets/textures/box.png", 0);
-	////materialB->mDepthWrite = false;//禁止深度写入
-	//materialB->mPolygonOffset = true;//zfighting
-	//materialB->mFactor = 1.0f;
-	//materialB->mUnit = 1.0f;
-	//auto meshB = new Mesh(geometry, materialB);
-	//meshB->setPosition(glm::vec3(0.0f, 0.5f, -0.0005f));
-	//meshB->rotateX(-88.0f);
 
+	////2 创建一个勾边方块
+	//auto materialABound = new WhiteMaterial();
+	//materialABound->mDepthTest = false;
+	//materialABound->mStencilTest = true;
+	////模板测试后的结果写入
+	//materialABound->mSFail = GL_KEEP;
+	//materialABound->mZFail = GL_KEEP;
+	//materialABound->mZPass = GL_KEEP;
+	////控制写入
+	//materialABound->mStencilMask = 0x00;
+	////模板测试规则
+	//materialABound->mStencilFunc = GL_NOTEQUAL;
+	//materialABound->mStencilRef = 1;
+	//materialABound->mStencilFuncMask = 0xff;
+	//auto meshABound = new Mesh(geometryA, materialABound);
+	//meshABound->setPosition(meshA->getPosition());
+	//meshABound->setScale(glm::vec3(1.2f));
+	//scene->addChild(meshABound);
+
+
+	////------------------B方块的实体与边界-----------------
+	////1 创建一个普通方块
+	//auto geometryB = Geometry::createBox(4.0f);
+	//auto materialB = new PhongMaterial();
+	//materialB->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
+	//materialB->mStencilTest = true;
+	////模板测试后的结果写入
+	//materialB->mSFail = GL_KEEP;
+	//materialB->mZFail = GL_KEEP;
+	//materialB->mZPass = GL_REPLACE;
+	////控制写入
+	//materialB->mStencilMask = 0xff;
+	////模板测试规则
+	//materialB->mStencilFunc = GL_ALWAYS;
+	//materialB->mStencilRef = 1;
+	//materialB->mStencilFuncMask = 0xff;
+
+	//auto meshB = new Mesh(geometryB, materialB);
+	//meshB->setPosition(glm::vec3(3.0f, 1.0f, 1.0f));
 	//scene->addChild(meshB);
 
-	/*auto materialC = new PhongMaterial();
-	materialC->mDiffuse = new Texture("assets/textures/earth.png", 0);
-	auto meshC = new Mesh(geometry, materialC);
-	meshC->setPosition(glm::vec3(4.0f, 1.0f, -2.0f));
-	scene->addChild(meshC);*/
 
-	//------------------A方块的实体与边界-----------------
-	//1 创建一个普通方块
-	auto geometryA = Geometry::createBox(4.0f);
-	auto materialA = new PhongMaterial();
-	materialA->mDiffuse = new Texture("assets/textures/goku.jpg", 0);
-	auto meshA = new Mesh(geometryA, materialA);
-
-	scene->addChild(meshA);
-
-
-	//2 创建一个勾边方块
-	auto materialABound = new WhiteMaterial();
-	materialABound->mDepthTest = false;
-	auto meshABound = new Mesh(geometryA, materialABound);
-	meshABound->setPosition(meshA->getPosition());
-	meshABound->setScale(glm::vec3(1.2f));
-	scene->addChild(meshABound);
+	////2 创建一个勾边方块
+	//auto materialBBound = new WhiteMaterial();
+	//materialBBound->mDepthTest = false;
+	//materialBBound->mStencilTest = true;
+	////模板测试后的结果写入
+	//materialBBound->mSFail = GL_KEEP;
+	//materialBBound->mZFail = GL_KEEP;
+	//materialBBound->mZPass = GL_KEEP;
+	////控制写入
+	//materialBBound->mStencilMask = 0x00;
+	////模板测试规则
+	//materialBBound->mStencilFunc = GL_NOTEQUAL;
+	//materialBBound->mStencilRef = 1;
+	//materialBBound->mStencilFuncMask = 0xff;
+	//auto meshBBound = new Mesh(geometryA, materialBBound);
+	//meshBBound->setPosition(meshB->getPosition());
+	//meshBBound->setScale(glm::vec3(1.2f));
+	//scene->addChild(meshBBound);
 
 
-	//------------------B方块的实体与边界-----------------
-	//1 创建一个普通方块
-	auto geometryB = Geometry::createBox(4.0f);
-	auto materialB = new PhongMaterial();
-	materialB->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
-	auto meshB = new Mesh(geometryB, materialB);
-	meshB->setPosition(glm::vec3(3.0f, 1.0f, 1.0f));
+	/*auto boxGeo = Geometry::createBox(4.0f);
+	auto boxMat = new PhongMaterial();
+	boxMat->mDiffuse = new Texture("assets/textures/box.png", 0);
+	auto boxMesh = new Mesh(boxGeo, boxMat);
+	scene->addChild(boxMesh);
 
-	scene->addChild(meshB);
-	//2 创建一个勾边方块
-	auto materialBBound = new WhiteMaterial();
-	materialBBound->mDepthTest = false;
-	auto meshBBound = new Mesh(geometryA, materialBBound);
-	meshBBound->setPosition(meshB->getPosition());
-	meshBBound->setScale(glm::vec3(1.2f));
-	scene->addChild(meshBBound);
+	auto planeGeo = Geometry::createPlane(6.0f, 6.0f);
+	auto planeMat = new PhongMaterial();
+	planeMat->mDiffuse = new Texture("assets/textures/window.png", 0);
+	auto planeMesh = new Mesh(planeGeo, planeMat);
+	planeMesh->setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
+	scene->addChild(planeMesh);*/
 
-	 
 
-	////1 创建geometry
-	//auto geometry = Geometry::createBox(1.0f);
-	//auto spGeometry = Geometry::createSphere(1.0f);
-	////2 创建material材质并且配置参数
-	//auto material = new PhongMaterial();
-	//material->mShiness = 16.0f;
-	//material->mDiffuse = new Texture("assets/textures/box.png", 0);
-	//material->mSpecularMask = new Texture("assets/textures/sp_mask.png", 1);
+	auto boxGeo = Geometry::createBox(5.0f);
+	auto boxMat = new WhiteMaterial();
+	auto boxMesh = new Mesh(boxGeo, boxMat);
+	boxMesh->setPosition(glm::vec3(0.0f, 0.0f, 5.0f));
+	scene->addChild(boxMesh);
 
-	////3 创建mesh
-	//auto mesh = new Mesh(geometry, material);
-	//auto spMesh = new Mesh(spGeometry, material);
-	//spMesh->setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
 
-	////创建父子关系
-	//mesh->addChild(spMesh);
-	//
-	////加入场景中
-	//scene->addChild(mesh); 
+	auto model = AssimpLoader::load("assets/fbx/bag/backpack.obj");
+	scene->addChild(model);
+
 
 	//方向光
 	dirLight = new DirectionalLight();

@@ -54,6 +54,10 @@ private:
 	//根据Material类型不同,挑选不同的shader
 	Shader* pickShader(MaterialType type);
 
+	void setDepthState(Material* material);
+	void setPolygonOffsetState(Material* material);
+	void setStencilState(Material* material);
+
 	//生成多种不同的shader对象
 	//根据材质类型的不同,挑选使用哪一个shader对象
 	Shader* mPhongShader{ nullptr };
