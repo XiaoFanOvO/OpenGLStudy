@@ -114,7 +114,7 @@ Mesh* AssimpLoader::processMesh(aiMesh* aimesh, const aiScene* scene, const std:
 
 	auto geometry = new Geometry(positions, normals, uvs, indices);
 	auto material = new PhongMaterial();
-	material->mDepthWrite = false;
+	//material->mDepthWrite = false;
 	//进行纹理读取
 	if (aimesh->mMaterialIndex >= 0)
 	{
@@ -124,7 +124,7 @@ Mesh* AssimpLoader::processMesh(aiMesh* aimesh, const aiScene* scene, const std:
 		texture = processTexture(aiMat, aiTextureType_DIFFUSE, scene, rootPath);
 		if (texture == nullptr)
 		{
-			texture = Texture::createTexture("assets/textures/defaultTexture.png", 0);
+			texture = Texture::createTexture("assets/textures/defaultTexture.jpg", 0);
 		}
 		texture->setUnit(0);
 		material->mDiffuse = texture;
@@ -132,14 +132,14 @@ Mesh* AssimpLoader::processMesh(aiMesh* aimesh, const aiScene* scene, const std:
 		auto speclarMask = processTexture(aiMat, aiTextureType_SPECULAR, scene, rootPath);
 		if (speclarMask == nullptr)
 		{
-			speclarMask = Texture::createTexture("assets/textures/defaultTexture.png", 0);
+			speclarMask = Texture::createTexture("assets/textures/defaultTexture.jpg", 0);
 		}
 		speclarMask->setUnit(1);
 		material->mSpecularMask = speclarMask;
 	}
 	else
 	{
-		material->mDiffuse = Texture::createTexture("assets/textures/defaultTexture.png", 0);
+		material->mDiffuse = Texture::createTexture("assets/textures/defaultTexture.jpg", 0);
 	}
 
 	return new Mesh(geometry, material);

@@ -6,7 +6,7 @@ in vec3 normal;
 in vec3 worldPosition;
 
 uniform sampler2D sampler;	//diffuse贴图采样器
-uniform sampler2D specularMaskSampler;//specularMask贴图采样器
+uniform sampler2D opacityMaskSampler;
 
 uniform vec3 ambientColor;
 
@@ -139,7 +139,7 @@ void main()
 
 	//环境光计算
 	vec3 objectColor  = texture(sampler, uv).xyz;
-	float alpha =  texture(sampler, uv).a;
+	float alpha =  texture(opacityMaskSampler, uv).r;
 
 	vec3 ambientColor = objectColor * ambientColor;
 

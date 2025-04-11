@@ -29,7 +29,7 @@ public:
 
 	glm::vec3 getPosition() const { return mPosition; }
 
-	glm::mat4 getModelMatrix();
+	glm::mat4 getModelMatrix() const;
 
 	//¸¸×Ó¹ØÏµ
 	void addChild(Object* obj);

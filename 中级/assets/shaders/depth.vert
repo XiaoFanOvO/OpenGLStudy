@@ -10,15 +10,16 @@ uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
-uniform mat3 normalMatrix;
 
-//aPos作为attribute（属性）传入shader
-//不允许更改的
 void main()
 {
 	vec4 transformPosition = vec4(aPos, 1.0);
+
 	transformPosition = modelMatrix * transformPosition;
+
+
 	gl_Position = projectionMatrix * viewMatrix * transformPosition;
+	
 	uv = aUV;
-	normal = aNormal;
+	normal =  aNormal;
 }

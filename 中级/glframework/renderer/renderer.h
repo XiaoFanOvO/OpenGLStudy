@@ -11,8 +11,10 @@
 #include "../shader.h"
 #include "../material/phongMaterial.h"
 #include "../material/whiteMaterial.h"
+#include "../material/opacityMaskMaterial.h"
 #include <string>
 #include "../scene.h"
+#include <algorithm>
 
 class Renderer
 {
@@ -50,18 +52,30 @@ public:
 
 	void setClearColor(glm::vec3 color);
 
+	Material* mGlobalMaterial{ nullptr };
+
 private:
+	void projectObject(Object* obj);
+
 	//根据Material类型不同,挑选不同的shader
 	Shader* pickShader(MaterialType type);
 
 	void setDepthState(Material* material);
 	void setPolygonOffsetState(Material* material);
 	void setStencilState(Material* material);
+	void setBlendState(Material* material);
+	void setFaceCullingState(Material* material);
 
 	//生成多种不同的shader对象
 	//根据材质类型的不同,挑选使用哪一个shader对象
 	Shader* mPhongShader{ nullptr };
 	Shader* mWhiteShader{ nullptr };
 	Shader* mDepthShader{ nullptr };
+	Shader* mOpacityMaskShader{ nullptr };
+
+	//不透明物体与透明物体的队列
+	//注意!! 每一帧绘制前需要清空两个队列
+	std::vector<Mesh*> mOpacityObjects{};
+	std::vector<Mesh*> mTransparentObjects{};
 };
 
