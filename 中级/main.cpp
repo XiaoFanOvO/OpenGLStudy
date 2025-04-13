@@ -19,6 +19,8 @@
 #include "glframework/material/whiteMaterial.h"
 #include "glframework/material/depthMaterial.h"
 #include "glframework/material/opacityMaskMaterial.h"
+#include "glframework/material/screenMaterial.h"
+#include "glframework/material/cubeMaterial.h"
 #include "glframework/mesh.h"
 #include "glframework/renderer/renderer.h"
 #include "glframework/light/pointLight.h"
@@ -31,9 +33,17 @@
 #include "glframework/scene.h"
 #include "application/assimpLoader.h"
 
+#include "glframework/framebuffer/framebuffer.h"
+
 
 Renderer* renderer = nullptr;
-Scene* scene = nullptr;
+Scene* sceneOffscreen = nullptr;//离屏渲染场景
+Scene* sceneInscreen = nullptr;//贴屏渲染场景
+
+Framebuffer* framebuffer = nullptr;
+
+int WIDTH = 1600;
+int HEIGHT = 1200;
 
 // 灯光
 std::vector<PointLight*> pointLights{};
@@ -76,57 +86,28 @@ void OnScroll(double offset) {
 }
 #pragma endregion
 
-#pragma region 老版本的调用方式
-//void prepareVAO() {
-//	//geometry = Geometry::createBox(3.0f);
-//	geometry = Geometry::createSphere(2.0f);
+//void prepareFBO() {
+//	//1 生成FBO对象并且绑定
+//	glGenFramebuffers(1, &fbo);
+//	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+//	//2 生成颜色附件,并且加入FBO
+//	colorAttachment = new Texture(WIDTH, HEIGHT, 0);
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment->getTexture(), 0);
+//	//3 生成depth Stencil附件,加入FBO
+//	unsigned int depthStencil;
+//	glGenTextures(1, &depthStencil);
+//	glBindTexture(GL_TEXTURE_2D, depthStencil);
+//	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthStencil, 0);
+//	//检查当前构建的fbo是否完整
+//	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+//	{
+//		std::cout << "Error: FrameBuffer is not complete" << std::endl;
+//	}
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0); //解绑FBO
 //}
-//
-//void prepareShader() {
-//	shader = new Shader("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
-//}
-//
-//void prepareTexture() {
-//	texture = new Texture("assets/textures/goku.jpg", 0);
-//}
-//
-//void prepareState() {
-//	glEnable(GL_DEPTH_TEST);
-//	glDepthFunc(GL_LESS);
-//}
-//
-//void doTransform() {
-//	transform = glm::rotate(transform, 0.03f, glm::vec3(0.0f, 1.0f, 1.0f));
-//}
-
-void render() {
-	////执行opengl画布清理操作
-	//GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
-	////绑定当前的program
-	//shader->begin();
-	//shader->setInt("sampler", 0);
-	//shader->setMatrix4x4("modelMatrix", transform);
-	//shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
-	//shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
-	//
-	////光源参数的uniform更新 
-	//shader->setVector3("lightDirection", lightDirection);
-	//shader->setVector3("lightColor", lightColor);
-	//shader->setVector3("cameraPosition", camera->mPosition);
-	//shader->setFloat("specularIntensity", specularIntensity);
-	//shader->setVector3("ambientColor", ambientColor);
- //
-	////绑定当前的vao
-	//GL_CALL(glBindVertexArray(geometry->getVao()));
-
-	////发出绘制指令
-	//GL_CALL(glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0));
-	//GL_CALL(glBindVertexArray(0));
-
-	//shader->end();
-}
-#pragma endregion
 
 void prepareCamera() {
 	float size = 10.0f;
@@ -159,25 +140,38 @@ void setModelBlend(Object* obj, bool blend, float opacity) {
 	}
 }
 
- 
+
 void prepare() {
 	renderer = new Renderer();
-	scene = new Scene();
+	sceneOffscreen = new Scene();
+	sceneInscreen = new Scene();
+
+	framebuffer = new Framebuffer(WIDTH, HEIGHT);
+
+	////离屏渲染的box
+	//auto boxGeo = Geometry::createBox(5.0f);
+	//auto boxMat = new PhongMaterial();
+	//boxMat->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
+	//auto boxMesh = new Mesh(boxGeo, boxMat);
+	//sceneOffscreen->addChild(boxMesh);
+
+	////贴到屏幕上的矩形
+	//auto geometry = Geometry::createScreenPlane();
+	//auto mat = new ScreenMaterial();
+	//mat->mScreenTexture = framebuffer->mColorAttachment; //!!!!!!!非常重要!!!! 第一个pass渲染完的图像当做纹理输入到第二个/pass
+	////auto mat = new PhongMaterial();
+	////mat->mDiffuse = framebuffer->mColorAttachment;
+	//auto mesh = new Mesh(geometry, mat);
+	////mesh->setPosition(glm::vec3(10.0f, 10.0f, 0.0f));
+	//sceneInscreen->addChild(mesh);
 
 
-	auto grassModel = AssimpLoader::load("assets/fbx/grass.fbx");
-	grassModel->setScale(glm::vec3(0.02f));
-	scene->addChild(grassModel);
+	auto boxGeo = Geometry::createBox(1.0f);
+	auto boxMat = new CubeMaterial();
+	boxMat->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
+	auto boxMesh = new Mesh(boxGeo, boxMat);
+	sceneInscreen->addChild(boxMesh);
 
-	auto grassMat = new OpacityMaskMaterial();
-	grassMat->mDiffuse = new Texture("assets/textures/grass.jpg", 0);
-	grassMat->mOpacityMask = new Texture("assets/textures/grassMask.png", 1);
-	grassMat->mBlend = true;
-	grassMat->mDepthWrite = false;
-	grassMat->mFaceCulling = true;
-	grassMat->mFrontFace = GL_CCW;
-	grassMat->mCullFace = GL_BACK;
-	renderer->mGlobalMaterial = grassMat;
 	 
 	//方向光
 	dirLight = new DirectionalLight();
@@ -224,7 +218,7 @@ void renderIMGUI() {
 
 
 int main() {
-	if (!glApp->init(1600, 1200)) {
+	if (!glApp->init(WIDTH, HEIGHT)) {
 		return -1;
 	}
 
@@ -235,18 +229,24 @@ int main() {
 	glApp->setScrollCallback(OnScroll);
 
 	//设置opengl视口以及清理颜色
-	GL_CALL(glViewport(0, 0, 1600, 1200));
+	GL_CALL(glViewport(0, 0, WIDTH, HEIGHT));
 	//GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 	GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
 	prepareCamera();
+	//注意顺序问题!!!! 否则colorattachment为nullptr
+	//prepareFBO();
 	prepare();
 	initIMGUI();
 
 	while (glApp->update()) {
 		cameraControl->update();
 		renderer->setClearColor(clearColor);
-		renderer->render(scene, camera, dirLight, ambLight);
+		//pass01 将box渲染到colorAttachmengt上,也就是新的fbo上
+		//renderer->render(sceneOffscreen, camera, dirLight, ambLight, framebuffer->mFBO);//这里采用我们自己的fbo
+
+		//pass02 将colorAttachment作为纹理,绘制到整个屏幕上
+		renderer->render(sceneInscreen, camera, dirLight, ambLight);//这里是默认的fbo
 		renderIMGUI();
 	}
 

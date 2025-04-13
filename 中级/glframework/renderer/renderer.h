@@ -12,6 +12,8 @@
 #include "../material/phongMaterial.h"
 #include "../material/whiteMaterial.h"
 #include "../material/opacityMaskMaterial.h"
+#include "../material/screenMaterial.h"
+#include "../material/cubeMaterial.h"
 #include <string>
 #include "../scene.h"
 #include <algorithm>
@@ -32,7 +34,7 @@ public:
 	//	AmbientLight* ambLight
 	//);
 
-	void render(Scene* scene, Camera* camera, DirectionalLight* dirLight, AmbientLight* ambLight);
+	void render(Scene* scene, Camera* camera, DirectionalLight* dirLight, AmbientLight* ambLight, unsigned int fbo = 0);
 
 	//void render(const std::vector<Mesh*>& meshes,
 	//	Camera* camera,
@@ -72,6 +74,8 @@ private:
 	Shader* mWhiteShader{ nullptr };
 	Shader* mDepthShader{ nullptr };
 	Shader* mOpacityMaskShader{ nullptr };
+	Shader* mScreenShader{ nullptr };
+	Shader* mCubeShader{ nullptr };
 
 	//不透明物体与透明物体的队列
 	//注意!! 每一帧绘制前需要清空两个队列

@@ -42,7 +42,29 @@ Texture* Texture::createTextureFromMemory(
 	return texture;
 }
 
+Texture* Texture::createColorAttachment(unsigned int width, unsigned int height, unsigned int unit) {
+	return new Texture(width, height, unit);
+}
 
+Texture* Texture::createDepthStencilAttachment(unsigned int width, unsigned int height, unsigned int unit) {
+	Texture* dsTex = new Texture();
+	unsigned int depthStencil;
+	glGenTextures(1, &depthStencil);
+	glBindTexture(GL_TEXTURE_2D, depthStencil);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	dsTex->mTexture = depthStencil;
+	dsTex->mWidth = width;
+	dsTex->mHeight = height;
+	dsTex->mUnit = unit;
+	return dsTex;
+}
+
+Texture::Texture() {
+	
+}
 
 Texture::Texture(const std::string& path, unsigned int unit) {
 	mUnit = unit;
@@ -129,6 +151,20 @@ Texture::Texture(unsigned int unit, unsigned char* dataIn, uint32_t widthIn, uin
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
 	
+}
+
+Texture::Texture(unsigned int width, unsigned int height, unsigned int unit) {
+	mWidth = width;
+	mHeight = height;
+	mUnit = unit;
+
+	glGenTextures(1, &mTexture);
+	glActiveTexture(GL_TEXTURE0 + mUnit);
+	glBindTexture(GL_TEXTURE_2D, mTexture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 

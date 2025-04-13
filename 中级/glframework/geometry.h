@@ -15,6 +15,7 @@ public:
 	static Geometry* createBox(float size);
 	static Geometry* createSphere(float radius);
 	static Geometry* createPlane(float width, float height);
+	static Geometry* createScreenPlane();
 
 	GLuint getVao()const { return mVao; }
 	uint32_t getIndicesCount()const { return mIndicesCount; }

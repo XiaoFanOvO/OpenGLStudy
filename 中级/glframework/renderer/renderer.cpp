@@ -6,6 +6,8 @@ Renderer::Renderer()
 	mWhiteShader = new Shader("assets/shaders/white.vert", "assets/shaders/white.frag");
 	mDepthShader = new Shader("assets/shaders/depth.vert", "assets/shaders/depth.frag");
 	mOpacityMaskShader = new Shader("assets/shaders/phongOpacityMask.vert", "assets/shaders/phongOpacityMask.frag");
+	mScreenShader = new Shader("assets/shaders/screen.vert", "assets/shaders/screen.frag");
+	mCubeShader = new Shader("assets/shaders/cube.vert", "assets/shaders/cube.frag");
 }
 
 Renderer::~Renderer()
@@ -93,7 +95,9 @@ void Renderer::setFaceCullingState(Material* material) {
 	}
 }
 
-void Renderer::render(Scene* scene, Camera* camera, DirectionalLight* dirLight, AmbientLight* ambLight) {
+void Renderer::render(Scene* scene, Camera* camera, DirectionalLight* dirLight, AmbientLight* ambLight, unsigned int fbo) {
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);//先绑定传进来的FBO(渲染到该fbo上)
+
 	//1 设置当前帧绘制的时候,opengl的必要状态机参数
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -260,6 +264,25 @@ void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* di
 			shader->setFloat("opacity", material->mOpacity);
 		}
 			break;
+		case MaterialType::ScreenMaterial: {
+			ScreenMaterial* screenMat = (ScreenMaterial*)material;
+			shader->setInt("screenTexSampler", 0);
+			screenMat->mScreenTexture->bind();
+			shader->setFloat("texWidth", 1600);//先写死 后面再优化
+			shader->setFloat("texHeight", 1200);
+		}
+			break;
+		case MaterialType::CubeMaterial: {
+			CubeMaterial* cubMat = (CubeMaterial*)material;
+			mesh->setPosition(camera->mPosition);//与相机同步移动
+			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+			shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
+			shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
+			shader->setInt("diffuse", 0);
+			cubMat->mDiffuse->bind();
+
+		}
+			break;
 		default:
 			break;
 		}
@@ -310,6 +333,12 @@ Shader* Renderer::pickShader(MaterialType type) {
 		break;
 	case MaterialType::OpacityMaskMaterial:
 		result = mOpacityMaskShader;
+		break;
+	case MaterialType::ScreenMaterial:
+		result = mScreenShader;
+		break;
+	case MaterialType::CubeMaterial:
+		result = mCubeShader;
 		break;
 	default:
 		std::cout << "Unknown material type to pick shader" << std::endl;

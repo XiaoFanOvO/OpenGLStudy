@@ -6,8 +6,9 @@ enum class MaterialType {
 	PhongMaterial,
 	WhiteMaterial,
 	DepthMaterial,
-	OpacityMaskMaterial
-
+	OpacityMaskMaterial,
+	ScreenMaterial,
+	CubeMaterial
 };
 
 class Material
