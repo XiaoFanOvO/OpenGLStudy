@@ -87,15 +87,15 @@ Texture::Texture(const std::string& path, unsigned int unit) {
 	//3 传输纹理数据,开辟显存
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	glGenerateMipmap(GL_TEXTURE_2D);
+	//glGenerateMipmap(GL_TEXTURE_2D);
 
 	//***释放数据 
 	stbi_image_free(data);
 
 	//4 设置纹理的过滤方式
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 
 	//5 设置纹理的包裹方式
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
@@ -167,6 +167,44 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int unit) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
+//右-左-上-下-后-前(+x -x +y -y +z -z)
+Texture::Texture(const std::vector<std::string>& paths, unsigned int unit) {
+	mUnit = unit;
+	mTextureTarget = GL_TEXTURE_CUBE_MAP;
+
+	//cubemap不需要翻转Y轴 
+	stbi_set_flip_vertically_on_load(false);
+	//1 创建CubeMap对象
+	glGenTextures(1, &mTexture);
+	glActiveTexture(GL_TEXTURE0 + mUnit);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, mTexture); //状态机设置
+
+	//2 循环读取六张贴图,并且放置到cubemap的六个GPU空间内
+	int channels;
+	int width = 0, height = 0;
+	unsigned char* data = nullptr;
+	for (int i = 0; i < paths.size(); i++)
+	{
+		data = stbi_load(paths[i].c_str(), &width, &height, &channels, STBI_rgb_alpha);
+		if (data != nullptr)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Error: CubeMap Texture failed to load at path ---" << paths[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+
+	//3 设置纹理的参数
+	glTexParameteri(mTextureTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(mTextureTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	glTexParameteri(mTextureTarget, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
+	glTexParameteri(mTextureTarget, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
+}
 
 Texture::~Texture() {
 	if (mTexture != 0) {
@@ -177,5 +215,5 @@ Texture::~Texture() {
 void Texture::bind() {
 	//先切换纹理单元，然后绑定texture对象
 	glActiveTexture(GL_TEXTURE0 + mUnit);
-	glBindTexture(GL_TEXTURE_2D, mTexture);
+	glBindTexture(mTextureTarget, mTexture);
 }

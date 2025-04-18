@@ -2,7 +2,7 @@
 #include <vector>
 #include <iostream>
 #include "../core.h"
-#include "../mesh.h"
+#include "../mesh/mesh.h"
 #include "../../application/camera/camera.h"
 #include "../light/directionalLight.h"
 #include "../light/ambientLight.h"
@@ -14,6 +14,9 @@
 #include "../material/opacityMaskMaterial.h"
 #include "../material/screenMaterial.h"
 #include "../material/cubeMaterial.h"
+#include "../material/phongEnvMaterial.h"
+#include "../material/phongInstanceMaterial.h"
+#include "../mesh/instancedMesh.h"
 #include <string>
 #include "../scene.h"
 #include <algorithm>
@@ -76,6 +79,8 @@ private:
 	Shader* mOpacityMaskShader{ nullptr };
 	Shader* mScreenShader{ nullptr };
 	Shader* mCubeShader{ nullptr };
+	Shader* mPhongEnvShader{ nullptr };
+	Shader* mPhongInstancedShader{ nullptr };
 
 	//不透明物体与透明物体的队列
 	//注意!! 每一帧绘制前需要清空两个队列

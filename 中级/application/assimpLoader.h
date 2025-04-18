@@ -7,7 +7,7 @@
 #include "assimp/postprocess.h"
 
 #include "../glframework/tools/tools.h"
-#include "../glframework/mesh.h"
+#include "../glframework/mesh/mesh.h"
 #include "../glframework/material/phongMaterial.h"
 #include "../glframework/texture.h"
 

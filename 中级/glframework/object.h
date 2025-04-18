@@ -5,6 +5,7 @@ enum class ObjectType {
 	Object,
 	Mesh,
 	Scene,
+	InstancedMesh
 };
 
 class Object

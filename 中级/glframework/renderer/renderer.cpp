@@ -8,6 +8,8 @@ Renderer::Renderer()
 	mOpacityMaskShader = new Shader("assets/shaders/phongOpacityMask.vert", "assets/shaders/phongOpacityMask.frag");
 	mScreenShader = new Shader("assets/shaders/screen.vert", "assets/shaders/screen.frag");
 	mCubeShader = new Shader("assets/shaders/cube.vert", "assets/shaders/cube.frag");
+	mPhongEnvShader = new Shader("assets/shaders/phongEnv.vert", "assets/shaders/PhongEnv.frag");
+	mPhongInstancedShader = new Shader("assets/shaders/phongInstance.vert", "assets/shaders/phongInstance.frag");
 }
 
 Renderer::~Renderer()
@@ -158,7 +160,7 @@ void Renderer::render(Scene* scene, Camera* camera, DirectionalLight* dirLight, 
 //针对单个object进行渲染
 void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* dirLight, AmbientLight* ambLight) {
 	//1 判断是Mesh还是Object 如果是Mesh才需要渲染
-	if (object-> getType() == ObjectType::Mesh)
+	if (object-> getType() == ObjectType::Mesh || object->getType() == ObjectType::InstancedMesh)
 	{
 		//具体渲染流程
 		auto mesh = (Mesh*)object;
@@ -278,9 +280,68 @@ void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* di
 			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
 			shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
 			shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
-			shader->setInt("diffuse", 0);
+			shader->setInt("sphericalSampler", 0);
 			cubMat->mDiffuse->bind();
+		}
+			break;
+		case MaterialType::PhongEnvMaterial: {
+			PhongEnvMaterial* phongMat = (PhongEnvMaterial*)material;
+			shader->setInt("sampler", 0);
+			phongMat->mDiffuse->bind();
+			shader->setInt("envSampler", 1);
+			phongMat->mEnv->bind();
+			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+			shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
+			shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
 
+			auto normalMatrix = glm::mat3(glm::transpose(glm::inverse(mesh->getModelMatrix())));
+			shader->setMatrix3x3("normalMatrix", normalMatrix);
+
+			//光源参数的uniform更新 
+			//directionalLight的更新
+			shader->setVector3("directionalLight.color", dirLight->mColor);
+			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
+
+			shader->setFloat("shiness", phongMat->mShiness);
+			//相机信息更新
+			shader->setVector3("cameraPosition", camera->mPosition);
+
+			//透明度
+			shader->setFloat("opacity", material->mOpacity);
+		}
+			break;
+		case MaterialType::PhongInstanceMaterial: {
+			PhongInstanceMaterial* phongMat = (PhongInstanceMaterial*)material;
+			InstancedMesh* im = (InstancedMesh*)mesh;
+			//将纹理采样器与纹理单元挂钩
+			//diffuse蒙版的帧更新
+			shader->setInt("sampler", 0);
+			//将纹理与纹理单元进行挂钩
+			phongMat->mDiffuse->bind();
+			//MVP
+			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+			shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
+			shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
+
+			auto normalMatrix = glm::mat3(glm::transpose(glm::inverse(mesh->getModelMatrix())));
+			shader->setMatrix3x3("normalMatrix", normalMatrix);
+
+			//光源参数的uniform更新 
+			//directionalLight的更新
+			shader->setVector3("directionalLight.color", dirLight->mColor);
+			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
+
+			shader->setFloat("shiness", phongMat->mShiness);
+			//相机信息更新
+			shader->setVector3("cameraPosition", camera->mPosition);
+
+			//透明度
+			shader->setFloat("opacity", material->mOpacity);
+
+			//**********传输uniform类型的矩阵变换数组************
+			//shader->setMatrix4x4Array("matrices", im->mInstanceMatrices, im->mInstanceCount);
 		}
 			break;
 		default:
@@ -289,13 +350,23 @@ void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* di
 		//3 绑定vao
 		glBindVertexArray(geometry->getVao());
 		//4 执行绘制命令
-		glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0);
+		if (object -> getType() == ObjectType::InstancedMesh)
+		{
+			//实例绘制
+			InstancedMesh* im = (InstancedMesh*)mesh;
+			glDrawElementsInstanced(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0, im->mInstanceCount);
+		}
+		else
+		{
+			//普通绘制
+			glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0);
+		}
 	}
 }
 
 //区分实体与透明物体
 void Renderer::projectObject(Object* obj) {
-	if (obj->getType() == ObjectType::Mesh)
+	if (obj->getType() == ObjectType::Mesh || obj->getType() == ObjectType::InstancedMesh)
 	{
 		Mesh* mesh = (Mesh*)obj;
 		auto material = mesh->mMaterial;
@@ -339,6 +410,12 @@ Shader* Renderer::pickShader(MaterialType type) {
 		break;
 	case MaterialType::CubeMaterial:
 		result = mCubeShader;
+		break;
+	case MaterialType::PhongEnvMaterial:
+		result = mPhongEnvShader;
+		break;
+	case MaterialType::PhongInstanceMaterial:
+		result = mPhongInstancedShader;
 		break;
 	default:
 		std::cout << "Unknown material type to pick shader" << std::endl;

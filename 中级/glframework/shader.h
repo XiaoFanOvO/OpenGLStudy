@@ -21,6 +21,7 @@ public:
 	void setInt(const std::string& name, int value);
 
 	void setMatrix4x4(const std::string& name, glm::mat4 value);
+	void setMatrix4x4Array(const std::string& name, glm::mat4* value, int count);
 	void setMatrix3x3(const std::string& name, glm::mat3 value);
 private:
 	//shader program

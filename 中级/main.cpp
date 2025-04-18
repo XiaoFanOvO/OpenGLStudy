@@ -21,7 +21,10 @@
 #include "glframework/material/opacityMaskMaterial.h"
 #include "glframework/material/screenMaterial.h"
 #include "glframework/material/cubeMaterial.h"
-#include "glframework/mesh.h"
+#include "glframework/material/phongEnvMaterial.h"
+#include "glframework/material/phongInstanceMaterial.h"
+#include "glframework/mesh/mesh.h"
+#include "glframework/mesh/instancedMesh.h"
 #include "glframework/renderer/renderer.h"
 #include "glframework/light/pointLight.h"
 #include "glframework/light/spotLight.h"
@@ -39,9 +42,11 @@
 Renderer* renderer = nullptr;
 Scene* sceneOffscreen = nullptr;//离屏渲染场景
 Scene* sceneInscreen = nullptr;//贴屏渲染场景
+Scene* scene = nullptr; //通用测试场景
 
 Framebuffer* framebuffer = nullptr;
 
+//这里先写死,后面需要单独进行管理
 int WIDTH = 1600;
 int HEIGHT = 1200;
 
@@ -143,36 +148,72 @@ void setModelBlend(Object* obj, bool blend, float opacity) {
 
 void prepare() {
 	renderer = new Renderer();
-	sceneOffscreen = new Scene();
-	sceneInscreen = new Scene();
+	scene = new Scene();
+	
+	//std::vector<std::string> paths = {
+	//	"assets/textures/skybox/right.jpg",
+	//	"assets/textures/skybox/left.jpg",
+	//	"assets/textures/skybox/top.jpg",
+	//	"assets/textures/skybox/bottom.jpg",
+	//	"assets/textures/skybox/back.jpg",
+	//	"assets/textures/skybox/front.jpg",
+	//};
 
-	framebuffer = new Framebuffer(WIDTH, HEIGHT);
-
-	////离屏渲染的box
-	//auto boxGeo = Geometry::createBox(5.0f);
-	//auto boxMat = new PhongMaterial();
-	//boxMat->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
+	////1 先绘制天空盒，就需要关闭它的深度写入
+	//auto boxGeo = Geometry::createBox(1.0f);
+	//auto boxMat = new CubeMaterial();
+	//boxMat->mDiffuse = new Texture(paths, 0);
+	//boxMat->mDepthWrite = false;//先绘制的话挡不住后面
 	//auto boxMesh = new Mesh(boxGeo, boxMat);
-	//sceneOffscreen->addChild(boxMesh);
+	//scene->addChild(boxMesh);
+	//auto sphereGeo = Geometry::createSphere(4.0f);
+	//auto sphereMat = new PhongMaterial();
+	//sphereMat->mDiffuse = new Texture("assets/textures/earth.png", 0);
+	//auto sphereMesh = new Mesh(sphereGeo, sphereMat);
+	//scene->addChild(sphereMesh);
 
-	////贴到屏幕上的矩形
-	//auto geometry = Geometry::createScreenPlane();
-	//auto mat = new ScreenMaterial();
-	//mat->mScreenTexture = framebuffer->mColorAttachment; //!!!!!!!非常重要!!!! 第一个pass渲染完的图像当做纹理输入到第二个/pass
-	////auto mat = new PhongMaterial();
-	////mat->mDiffuse = framebuffer->mColorAttachment;
-	//auto mesh = new Mesh(geometry, mat);
-	////mesh->setPosition(glm::vec3(10.0f, 10.0f, 0.0f));
-	//sceneInscreen->addChild(mesh);
+	////2 先绘制球体再绘制天空盒，球体由于是最后一个绘制，写不写入深度都无所谓了
+	//auto sphereGeo = Geometry::createSphere(4.0f);
+	//auto sphereMat = new PhongMaterial();
+	//sphereMat->mDiffuse = new Texture("assets/textures/earth.png", 0);
+	//auto sphereMesh = new Mesh(sphereGeo, sphereMat);
+	//scene->addChild(sphereMesh);
+	//auto boxGeo = Geometry::createBox(1.0f);
+	//auto boxMat = new CubeMaterial();
+	//boxMat->mDiffuse = new Texture(paths, 0);
+	//boxMat->mDepthWrite = false;
+	//auto boxMesh = new Mesh(boxGeo, boxMat);
+	//scene->addChild(boxMesh);
+
+	//3 最好的办法就是天空盒的深度永远是1 永远通不过深度检测 这样就和绘制顺序没关系了
+	//gl_Position = gl_Position.xyww;
 
 
 	auto boxGeo = Geometry::createBox(1.0f);
 	auto boxMat = new CubeMaterial();
-	boxMat->mDiffuse = new Texture("assets/textures/wall.jpg", 0);
+	boxMat->mDiffuse = new Texture("assets/textures/bk.jpg", 0);
 	auto boxMesh = new Mesh(boxGeo, boxMat);
-	sceneInscreen->addChild(boxMesh);
+	scene->addChild(boxMesh);
 
-	 
+	auto sphereGeo = Geometry::createSphere(4.0f);
+	auto sphereMat = new PhongInstanceMaterial();
+	sphereMat->mDiffuse = new Texture("assets/textures/earth.png", 3);
+	
+	auto sphereMesh = new InstancedMesh(sphereGeo, sphereMat,3);
+	glm::mat4 transform0 = glm::mat4(1.0f);
+	glm::mat4 transform1 = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f));
+	glm::mat4 transform2 = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 0.0f));
+	sphereMesh->mInstanceMatrices[0] = transform0;
+	sphereMesh->mInstanceMatrices[1] = transform1;
+	sphereMesh->mInstanceMatrices[2] = transform2;
+	sphereMesh->updateMatrices();
+	scene->addChild(sphereMesh);
+
+
+
+	
+
+	
 	//方向光
 	dirLight = new DirectionalLight();
 	dirLight->mDirection = glm::vec3(-1.0f);
@@ -246,7 +287,7 @@ int main() {
 		//renderer->render(sceneOffscreen, camera, dirLight, ambLight, framebuffer->mFBO);//这里采用我们自己的fbo
 
 		//pass02 将colorAttachment作为纹理,绘制到整个屏幕上
-		renderer->render(sceneInscreen, camera, dirLight, ambLight);//这里是默认的fbo
+		renderer->render(scene, camera, dirLight, ambLight);//这里是默认的fbo
 		renderIMGUI();
 	}
 

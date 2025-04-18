@@ -2,6 +2,7 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aUV;
 layout (location = 2) in vec3 aNormal;
+//layout (location = 3) in float aUV2;
 
 out vec2 uv;
 out vec3 normal;
@@ -29,6 +30,7 @@ void main()
 	gl_Position = projectionMatrix * viewMatrix * transformPosition;
 	
 	uv = aUV;
+	//uv = vec2(aUV,aUV2);
 //	normal =  transpose(inverse(mat3(modelMatrix))) * aNormal;
 	normal =  normalMatrix * aNormal;
 }

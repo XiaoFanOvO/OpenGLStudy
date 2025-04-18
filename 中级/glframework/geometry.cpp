@@ -175,7 +175,12 @@ Geometry* Geometry::createBox(float size) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2 , (void*)0);
+
+	//个人小实验： 这里也可以绑多个vao 比如这里的uv可以分别绑两个
+	//glEnableVertexAttribArray(3);
+	//glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float)*2, (void*)(sizeof(float)));
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
 	glEnableVertexAttribArray(2);

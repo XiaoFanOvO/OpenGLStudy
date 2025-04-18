@@ -8,7 +8,9 @@ enum class MaterialType {
 	DepthMaterial,
 	OpacityMaskMaterial,
 	ScreenMaterial,
-	CubeMaterial
+	CubeMaterial,
+	PhongEnvMaterial,
+	PhongInstanceMaterial
 };
 
 class Material
@@ -21,7 +23,7 @@ public:
 
 	//深度检测相关
 	bool mDepthTest{ true };
-	GLenum mDepthFunc{GL_LESS};
+	GLenum mDepthFunc{GL_LEQUAL};//小于等于的时候才能通过测试（天空盒深度为1也能通过了）
 	bool mDepthWrite{ true };
 
 	//polygonOffset相关
