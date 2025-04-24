@@ -10,7 +10,7 @@ Texture* Texture::createTexture(const std::string& path, unsigned int unit) {
 	//1 检查是否缓存过本路径对应的纹理对象
 	auto iter = mTextureCache.find(path);
 	if (iter != mTextureCache.end())
-	{	
+	{
 		//对于iterater, first->key, second->value
 		return iter->second;
 	}
@@ -63,7 +63,7 @@ Texture* Texture::createDepthStencilAttachment(unsigned int width, unsigned int 
 }
 
 Texture::Texture() {
-	
+
 }
 
 Texture::Texture(const std::string& path, unsigned int unit) {
@@ -122,7 +122,7 @@ Texture::Texture(unsigned int unit, unsigned char* dataIn, uint32_t widthIn, uin
 	{
 		//如果内嵌图片不是压缩格式,height = 正常高度,width = 正常宽度
 		//偷懒: 统一认为数据格式都是RGBA
-		dataInSize = widthIn * heightIn * 4 ;
+		dataInSize = widthIn * heightIn * 4;
 	}
 
 	unsigned char* data = stbi_load_from_memory(dataIn, dataInSize, &mWidth, &mHeight, &channels, STBI_rgb_alpha);
@@ -150,7 +150,7 @@ Texture::Texture(unsigned int unit, unsigned char* dataIn, uint32_t widthIn, uin
 	//5 设置纹理的包裹方式
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
-	
+
 }
 
 Texture::Texture(unsigned int width, unsigned int height, unsigned int unit) {

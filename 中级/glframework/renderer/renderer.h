@@ -16,6 +16,7 @@
 #include "../material/cubeMaterial.h"
 #include "../material/phongEnvMaterial.h"
 #include "../material/phongInstanceMaterial.h"
+#include "../material/grassInstanceMaterial.h"
 #include "../mesh/instancedMesh.h"
 #include <string>
 #include "../scene.h"
@@ -81,6 +82,7 @@ private:
 	Shader* mCubeShader{ nullptr };
 	Shader* mPhongEnvShader{ nullptr };
 	Shader* mPhongInstancedShader{ nullptr };
+	Shader* mGrassInstanceShader{ nullptr };
 
 	//不透明物体与透明物体的队列
 	//注意!! 每一帧绘制前需要清空两个队列

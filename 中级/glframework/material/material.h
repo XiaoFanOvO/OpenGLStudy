@@ -10,7 +10,8 @@ enum class MaterialType {
 	ScreenMaterial,
 	CubeMaterial,
 	PhongEnvMaterial,
-	PhongInstanceMaterial
+	PhongInstanceMaterial,
+	GrassInstanceMaterial
 };
 
 class Material

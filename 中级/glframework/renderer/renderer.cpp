@@ -10,6 +10,7 @@ Renderer::Renderer()
 	mCubeShader = new Shader("assets/shaders/cube.vert", "assets/shaders/cube.frag");
 	mPhongEnvShader = new Shader("assets/shaders/phongEnv.vert", "assets/shaders/PhongEnv.frag");
 	mPhongInstancedShader = new Shader("assets/shaders/phongInstance.vert", "assets/shaders/phongInstance.frag");
+	mGrassInstanceShader = new Shader("assets/shaders/grassInstance.vert", "assets/shaders/grassInstance.frag");
 }
 
 Renderer::~Renderer()
@@ -344,6 +345,51 @@ void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* di
 			//shader->setMatrix4x4Array("matrices", im->mInstanceMatrices, im->mInstanceCount);
 		}
 			break;
+		case MaterialType::GrassInstanceMaterial: {
+			GrassInstanceMaterial* grassMat = (GrassInstanceMaterial*)material;
+			InstancedMesh* im = (InstancedMesh*)mesh;
+			//按照离摄像机的远近排序并更新数据
+			im->sortMatrices(camera->getViewMatrix());
+			im->updateMatrices();
+			//将纹理采样器与纹理单元挂钩
+			//diffuse蒙版的帧更新
+			shader->setInt("sampler", 0);
+			//将纹理与纹理单元进行挂钩
+			grassMat->mDiffuse->bind();
+			shader->setInt("opacityMask", 1);
+			grassMat->mOpacityMask->bind();
+		
+			//MVP
+			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+			shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
+			shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
+
+			//实例绘制中不只有mesh的modelMatrix 还有实例化的实例矩阵 这就不能在CPU端进行计算了(只有一次命令)
+			/*auto normalMatrix = glm::mat3(glm::transpose(glm::inverse(mesh->getModelMatrix())));
+			shader->setMatrix3x3("normalMatrix", normalMatrix);*/
+
+			//光源参数的uniform更新 
+			//directionalLight的更新
+			shader->setVector3("directionalLight.color", dirLight->mColor);
+			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
+
+			shader->setFloat("shiness", grassMat->mShiness);
+			//相机信息更新
+			shader->setVector3("cameraPosition", camera->mPosition);
+
+			//透明度
+			shader->setFloat("opacity", material->mOpacity);
+
+			//贴图特性
+			shader->setFloat("uvScale", grassMat->mUVScale);
+			shader->setFloat("brightness", grassMat->mBrightness);
+
+
+			//**********传输uniform类型的矩阵变换数组************
+			//shader->setMatrix4x4Array("matrices", im->mInstanceMatrices, im->mInstanceCount);
+		}
+			break;
 		default:
 			break;
 		}
@@ -416,6 +462,9 @@ Shader* Renderer::pickShader(MaterialType type) {
 		break;
 	case MaterialType::PhongInstanceMaterial:
 		result = mPhongInstancedShader;
+		break;
+	case MaterialType::GrassInstanceMaterial:
+		result = mGrassInstanceShader;
 		break;
 	default:
 		std::cout << "Unknown material type to pick shader" << std::endl;

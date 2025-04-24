@@ -23,6 +23,7 @@
 #include "glframework/material/cubeMaterial.h"
 #include "glframework/material/phongEnvMaterial.h"
 #include "glframework/material/phongInstanceMaterial.h"
+#include "glframework/material/grassInstanceMaterial.h"
 #include "glframework/mesh/mesh.h"
 #include "glframework/mesh/instancedMesh.h"
 #include "glframework/renderer/renderer.h"
@@ -35,6 +36,7 @@
 
 #include "glframework/scene.h"
 #include "application/assimpLoader.h"
+#include "application/assimpInstanceLoader.h"
 
 #include "glframework/framebuffer/framebuffer.h"
 
@@ -49,6 +51,8 @@ Framebuffer* framebuffer = nullptr;
 //这里先写死,后面需要单独进行管理
 int WIDTH = 1600;
 int HEIGHT = 1200;
+
+GrassInstanceMaterial* grassMaterial = nullptr;//这里后面要通过imgui去调整,所以放到全局
 
 // 灯光
 std::vector<PointLight*> pointLights{};
@@ -145,49 +149,49 @@ void setModelBlend(Object* obj, bool blend, float opacity) {
 	}
 }
 
+void setInstanceMatrix(Object* obj, int index, glm::mat4 matrix) {
+	if (obj->getType() == ObjectType::InstancedMesh)
+	{
+		InstancedMesh* im = (InstancedMesh*)obj;
+		im->mInstanceMatrices[index] = matrix;
+	}
+	auto children = obj->getChildren();
+	for (int i = 0; i < children.size(); i++)
+	{
+		setInstanceMatrix(children[i], index, matrix);
+	}
+}
+
+void updateInstanceMatrix(Object* obj) {
+	if (obj->getType() == ObjectType::InstancedMesh)
+	{
+		InstancedMesh* im = (InstancedMesh*)obj;
+		im->updateMatrices();
+	}
+	auto children = obj->getChildren();
+	for (int i = 0; i < children.size(); i++)
+	{
+		updateInstanceMatrix(children[i]);
+	}
+} 
+
+void setInstanceMaterial(Object* obj, Material* material) {
+	if (obj->getType() == ObjectType::InstancedMesh)
+	{
+		InstancedMesh* im = (InstancedMesh*)obj;
+		im->mMaterial = material;
+	}
+	auto children = obj->getChildren();
+	for (int i = 0; i < children.size(); i++)
+	{
+		setInstanceMaterial(children[i], material);
+	}
+}
 
 void prepare() {
 	renderer = new Renderer();
 	scene = new Scene();
 	
-	//std::vector<std::string> paths = {
-	//	"assets/textures/skybox/right.jpg",
-	//	"assets/textures/skybox/left.jpg",
-	//	"assets/textures/skybox/top.jpg",
-	//	"assets/textures/skybox/bottom.jpg",
-	//	"assets/textures/skybox/back.jpg",
-	//	"assets/textures/skybox/front.jpg",
-	//};
-
-	////1 先绘制天空盒，就需要关闭它的深度写入
-	//auto boxGeo = Geometry::createBox(1.0f);
-	//auto boxMat = new CubeMaterial();
-	//boxMat->mDiffuse = new Texture(paths, 0);
-	//boxMat->mDepthWrite = false;//先绘制的话挡不住后面
-	//auto boxMesh = new Mesh(boxGeo, boxMat);
-	//scene->addChild(boxMesh);
-	//auto sphereGeo = Geometry::createSphere(4.0f);
-	//auto sphereMat = new PhongMaterial();
-	//sphereMat->mDiffuse = new Texture("assets/textures/earth.png", 0);
-	//auto sphereMesh = new Mesh(sphereGeo, sphereMat);
-	//scene->addChild(sphereMesh);
-
-	////2 先绘制球体再绘制天空盒，球体由于是最后一个绘制，写不写入深度都无所谓了
-	//auto sphereGeo = Geometry::createSphere(4.0f);
-	//auto sphereMat = new PhongMaterial();
-	//sphereMat->mDiffuse = new Texture("assets/textures/earth.png", 0);
-	//auto sphereMesh = new Mesh(sphereGeo, sphereMat);
-	//scene->addChild(sphereMesh);
-	//auto boxGeo = Geometry::createBox(1.0f);
-	//auto boxMat = new CubeMaterial();
-	//boxMat->mDiffuse = new Texture(paths, 0);
-	//boxMat->mDepthWrite = false;
-	//auto boxMesh = new Mesh(boxGeo, boxMat);
-	//scene->addChild(boxMesh);
-
-	//3 最好的办法就是天空盒的深度永远是1 永远通不过深度检测 这样就和绘制顺序没关系了
-	//gl_Position = gl_Position.xyww;
-
 
 	auto boxGeo = Geometry::createBox(1.0f);
 	auto boxMat = new CubeMaterial();
@@ -195,25 +199,42 @@ void prepare() {
 	auto boxMesh = new Mesh(boxGeo, boxMat);
 	scene->addChild(boxMesh);
 
-	auto sphereGeo = Geometry::createSphere(4.0f);
-	auto sphereMat = new PhongInstanceMaterial();
-	sphereMat->mDiffuse = new Texture("assets/textures/earth.png", 3);
-	
-	auto sphereMesh = new InstancedMesh(sphereGeo, sphereMat,3);
-	glm::mat4 transform0 = glm::mat4(1.0f);
-	glm::mat4 transform1 = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f));
-	glm::mat4 transform2 = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 0.0f));
-	sphereMesh->mInstanceMatrices[0] = transform0;
-	sphereMesh->mInstanceMatrices[1] = transform1;
-	sphereMesh->mInstanceMatrices[2] = transform2;
-	sphereMesh->updateMatrices();
-	scene->addChild(sphereMesh);
+	int rNum = 50;
+	int cNum = 50;
+
+	auto grassModel = AssimpInstanceLoader::load("assets/fbx/grassNew.obj", rNum * cNum);
+	glm::mat4 translate;//平移
+	glm::mat4 rotate;//旋转
+	glm::mat4 transform;//合并矩阵
+
+	srand(glfwGetTime());//给定随机种子
+	for (int r = 0; r < rNum; r++)
+	{
+		for (int c = 0; c < cNum; c++)
+		{
+			translate = glm::translate(glm::mat4(1.0f), glm::vec3(0.2 * r, 0.0f, 0.2 * c));
+			rotate = glm::rotate(glm::radians((float)(rand() % 90)), glm::vec3(0.0, 1.0, 0.0));
+			transform = translate * rotate;
+			setInstanceMatrix(grassModel, r * cNum + c, transform);
+		}
+	}
+	updateInstanceMatrix(grassModel);
+
+	/*auto transform0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	auto transform1 = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	setInstanceMatrix(grassModel, 0, transform0);
+	setInstanceMatrix(grassModel, 1, transform1);
+	updateInstanceMatrix(grassModel);*/
+
+	grassMaterial = new GrassInstanceMaterial();
+	grassMaterial->mDiffuse = new Texture("assets/textures/GRASS.png", 0);
+	grassMaterial->mOpacityMask = new Texture("assets/textures/grassMask.png", 1);
+	grassMaterial->mBlend = true;
+	grassMaterial->mDepthWrite = false;
+	setInstanceMaterial(grassModel, grassMaterial);
+	scene->addChild(grassModel);
 
 
-
-	
-
-	
 	//方向光
 	dirLight = new DirectionalLight();
 	dirLight->mDirection = glm::vec3(-1.0f);
@@ -240,10 +261,10 @@ void renderIMGUI() {
 	ImGui::NewFrame();
 
 	//2 决定当前的GUI上面有哪些控件，从上到下
-	ImGui::Begin("Hello, world!");
-	ImGui::Text("ChangeColor Demo");
-	ImGui::Button("Test Button", ImVec2(40, 20));
-	ImGui::ColorEdit3("Clear Color", (float*)&clearColor);
+	ImGui::Begin("GrassMaterialEditor");
+	ImGui::Text("GrassColor");
+	ImGui::SliderFloat("UVScale", &grassMaterial->mUVScale, 0.0f, 100.0f);
+	ImGui::InputFloat("Brightness", &grassMaterial->mBrightness);
 	ImGui::End();
 	
 	//3 执行UI渲染
@@ -256,6 +277,8 @@ void renderIMGUI() {
 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+
 
 
 int main() {
