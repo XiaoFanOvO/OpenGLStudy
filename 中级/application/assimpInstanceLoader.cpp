@@ -107,7 +107,7 @@ InstancedMesh* AssimpInstanceLoader::processMesh(aiMesh* aimesh, const aiScene* 
 			//如果不存在第0套uv 则设置为默认值
 			uvs.push_back(0.0f);
 			uvs.push_back(0.0f);
-		}
+		}  
 	}
 
 	//解析mesh中的索引值

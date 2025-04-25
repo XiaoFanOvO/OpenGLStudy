@@ -229,10 +229,18 @@ void prepare() {
 	grassMaterial = new GrassInstanceMaterial();
 	grassMaterial->mDiffuse = new Texture("assets/textures/GRASS.png", 0);
 	grassMaterial->mOpacityMask = new Texture("assets/textures/grassMask.png", 1);
+	grassMaterial->mCloudMask = new Texture("assets/textures/CLOUD.PNG", 2);
 	grassMaterial->mBlend = true;
 	grassMaterial->mDepthWrite = false;
 	setInstanceMaterial(grassModel, grassMaterial);
 	scene->addChild(grassModel);
+
+
+	auto house = AssimpLoader::load("assets/fbx/house.fbx");
+	house->setScale(glm::vec3(0.5f));
+	house->setPosition(glm::vec3(rNum * 0.2f / 2.0f, 0.4f, cNum * 0.2f / 2.0f));
+	scene->addChild(house);
+
 
 
 	//方向光
@@ -265,6 +273,18 @@ void renderIMGUI() {
 	ImGui::Text("GrassColor");
 	ImGui::SliderFloat("UVScale", &grassMaterial->mUVScale, 0.0f, 100.0f);
 	ImGui::InputFloat("Brightness", &grassMaterial->mBrightness);
+	ImGui::Text("Wind");
+	ImGui::InputFloat("WindScale", &grassMaterial->mWindScale);
+	ImGui::InputFloat("PhaseScale", &grassMaterial->mPhaseScale);
+	ImGui::ColorEdit3("WindDirection", (float*)&grassMaterial->mWindDirection);
+	ImGui::Text("Cloud");
+	ImGui::ColorEdit3("CloudWhiteColor", (float*)&grassMaterial->mCloudWhiteColor);
+	ImGui::ColorEdit3("CloudBlackColor", (float*)&grassMaterial->mCloudBlackColor);
+	ImGui::SliderFloat("CloudUVScale", &grassMaterial->mCloudUVScale, 0.0f, 100.0f);
+	ImGui::InputFloat("CloudSpeed", &grassMaterial->mCloudSpeed);
+	ImGui::SliderFloat("CloudLerp", &grassMaterial->mCloudLerp, 0.0f, 1.0f);
+	ImGui::Text("Light");
+	ImGui::InputFloat("Intensity", &dirLight->mIntensity);
 	ImGui::End();
 	
 	//3 执行UI渲染

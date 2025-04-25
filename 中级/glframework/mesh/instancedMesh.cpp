@@ -16,9 +16,9 @@ InstancedMesh::InstancedMesh(
 	glBindBuffer(GL_ARRAY_BUFFER, mMatrixVbo);
 	for (int i = 0; i < 4; i++)
 	{
-		glEnableVertexAttribArray(3 + i);
-		glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(float) * i * 4));
-		glVertexAttribDivisor(3 + i, 1);//逐实例更新
+		glEnableVertexAttribArray(4 + i);//这里原来三号位置放了草的顶点颜色
+		glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(float) * i * 4));
+		glVertexAttribDivisor(4 + i, 1);//逐实例更新
 	}
 	glBindVertexArray(0);
 }

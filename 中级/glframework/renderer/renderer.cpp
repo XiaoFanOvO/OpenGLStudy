@@ -214,6 +214,7 @@ void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* di
 			shader->setVector3("directionalLight.color", dirLight->mColor);
 			shader->setVector3("directionalLight.direction", dirLight->mDirection);
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
+			shader->setFloat("directionalLight.intensity", dirLight->mIntensity);
 			
 			shader->setFloat("shiness", phongMat->mShiness);
 			//相机信息更新
@@ -385,6 +386,21 @@ void Renderer::renderObject(Object* object, Camera* camera, DirectionalLight* di
 			shader->setFloat("uvScale", grassMat->mUVScale);
 			shader->setFloat("brightness", grassMat->mBrightness);
 
+			shader->setFloat("time", glfwGetTime());
+
+			//风力
+			shader->setFloat("windScale", grassMat->mWindScale);
+			shader->setVector3("windDirection", grassMat->mWindDirection);
+			shader->setFloat("phaseScale", grassMat->mPhaseScale);
+
+			//云层
+			shader->setInt("cloudMask", 2);
+			grassMat->mCloudMask->bind();
+			shader->setVector3("cloudWhiteColor", grassMat->mCloudWhiteColor);
+			shader->setVector3("cloudBlackColor", grassMat->mCloudBlackColor);
+			shader->setFloat("cloudUVScale", grassMat->mCloudUVScale);
+			shader->setFloat("cloudSpeed", grassMat->mCloudSpeed);
+			shader->setFloat("cloudLerp", grassMat->mCloudLerp);
 
 			//**********传输uniform类型的矩阵变换数组************
 			//shader->setMatrix4x4Array("matrices", im->mInstanceMatrices, im->mInstanceCount);
