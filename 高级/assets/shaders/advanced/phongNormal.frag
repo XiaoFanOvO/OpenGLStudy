@@ -137,10 +137,11 @@ void main()
 	vec3 result = vec3(0.0,0.0,0.0);
 
 	//计算光照的通用数据
-	//vec3 normalN = normalize(normal);
-	vec3 normalN = texture(normalMapSampler, uv).rgb;//法线从法线贴图里面去拿数据(tbn空间下)
-	normalN = normalN * 2.0 - vec3(1.0);//从0-1变成-1-1
-	normalN = normalize(tbn * normalN);//通过tbn矩阵转换到世界空间下
+//	vec3 normalN = normalize(normal);
+	vec3 normalN = texture(normalMapSampler,uv).rgb;
+	normalN = normalN * 2.0 - vec3(1.0); //从0-1变成-1~1
+	normalN = normalize(tbn * normalN);
+
 	vec3 viewDir = normalize(worldPosition - cameraPosition);
 
 	result += calculateDirectionalLight(objectColor, directionalLight,normalN, viewDir);

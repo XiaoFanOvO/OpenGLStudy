@@ -15,7 +15,7 @@ Geometry::Geometry(
 
 	glGenBuffers(1, &mPosVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mPosVbo);
-	glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), positions.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, positions.size()*sizeof(float), positions.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &mUvVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mUvVbo);
@@ -23,7 +23,7 @@ Geometry::Geometry(
 
 	glGenBuffers(1, &mNormalVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mNormalVbo);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(float), normals.data(), GL_STATIC_DRAW);
 
 	//3 EBO创建
 	glGenBuffers(1, &mEbo);
@@ -391,7 +391,7 @@ Geometry* Geometry::createSphere(float radius) {
 		}
 	}
 
-
+	
 	//********开始计算切线********
 	tangents.resize(positions.size());
 	//以三角形为单位进行indices的遍历
@@ -402,14 +402,14 @@ Geometry* Geometry::createSphere(float radius) {
 		int idx2 = indices[i + 2];
 
 		//2 根据三个顶点的索引，从positions数组中找到三个顶点的位置信息
-		auto p0 = glm::vec3(positions[idx0 * 3], positions[idx0 * 3 + 1], positions[idx0 * 3 + 2]);
-		auto p1 = glm::vec3(positions[idx1 * 3], positions[idx1 * 3 + 1], positions[idx1 * 3 + 2]);
-		auto p2 = glm::vec3(positions[idx2 * 3], positions[idx2 * 3 + 1], positions[idx2 * 3 + 2]);
+		auto p0 = glm::vec3(positions[idx0 * 3], positions[idx0 * 3+1], positions[idx0 * 3+2]);
+		auto p1 = glm::vec3(positions[idx1 * 3], positions[idx1 * 3+1], positions[idx1 * 3+2]);
+		auto p2 = glm::vec3(positions[idx2 * 3], positions[idx2 * 3+1], positions[idx2 * 3+2]);
 
 		//3 根据三个顶点的索引，从uvs数组中找到三个顶点的uv信息
-		auto uv0 = glm::vec2(uvs[idx0 * 2], uvs[idx0 * 2 + 1]);
-		auto uv1 = glm::vec2(uvs[idx1 * 2], uvs[idx1 * 2 + 1]);
-		auto uv2 = glm::vec2(uvs[idx2 * 2], uvs[idx2 * 2 + 1]);
+		auto uv0 = glm::vec2(uvs[idx0 * 2], uvs[idx0 * 2+1]);
+		auto uv1 = glm::vec2(uvs[idx1 * 2], uvs[idx1 * 2+1]);
+		auto uv2 = glm::vec2(uvs[idx2 * 2], uvs[idx2 * 2+1]);
 
 		//4 根据公式，计算当前三角形的tangent
 		glm::vec3 e0 = p1 - p0;

@@ -43,10 +43,16 @@
 
 #include "glframework/framebuffer/framebuffer.h"
 
-
 #include "application/assimpInstanceLoader.h"
 
-
+/*  
+*┌────────────────────────────────────────────────┐
+*│　目	   标： Shader中加入Include功能
+*│　讲    师： 赵新政(Carma Zhao)
+*	 拆分目标： 
+*				干就完了
+*└───────────────────────────────────────────────┘
+*/
 Renderer* renderer = nullptr;
 Scene* sceneOff = nullptr;
 Scene* scene = nullptr;
@@ -54,8 +60,6 @@ Framebuffer* fbo = nullptr;
 
 int WIDTH = 2560;
 int HEIGHT = 1440;
-
-PhongMaterial* mat = nullptr;
 
 //灯光们
 DirectionalLight* dirLight = nullptr;
@@ -94,8 +98,6 @@ void OnScroll(double offset) {
 
 
 void prepare() {
-	//glEnable(GL_FRAMEBUFFER_SRGB);
-
 	fbo = new Framebuffer(WIDTH, HEIGHT);
 
 	renderer = new Renderer();
@@ -104,9 +106,8 @@ void prepare() {
 
 	//pass 01
 	auto geo = Geometry::createBox(5.0);
-	mat = new PhongMaterial();
+	auto mat = new PhongMaterial();
 	mat->mDiffuse = new Texture("assets/textures/parallax/bricks.jpg", 0, GL_SRGB_ALPHA);
-
 
 	mat->mShiness = 32;
 	auto mesh = new Mesh(geo, mat);
@@ -119,15 +120,15 @@ void prepare() {
 	auto smesh = new Mesh(sgeo, smat);
 	scene->addChild(smesh);
 
-
+	
 	dirLight = new DirectionalLight();
-	dirLight->mDirection = glm::vec3(0.0f, -0.4f, -1.0f);
+	dirLight->mDirection = glm::vec3(0.0f, -0.4f,-1.0f);
 	dirLight->mSpecularIntensity = 0.5f;
 
 	ambLight = new AmbientLight();
 	ambLight->mColor = glm::vec3(0.1f);
 
-} 
+}
 
 
 void prepareCamera() {
@@ -165,8 +166,6 @@ void renderIMGUI() {
 
 	//2 决定当前的GUI上面有哪些控件，从上到下
 	ImGui::Begin("MaterialEditor");
-	ImGui::SliderFloat("heightScale", &mat->mHeightScale, 0.0f, 1.0f);
-	ImGui::InputFloat("layerNum", &mat->mLayerNum);
 	ImGui::End();
 
 	//3 执行UI渲染

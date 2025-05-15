@@ -2,7 +2,6 @@
 out vec4 FragColor;
 
 
-#include "../common/commonLight.glsl"
 
 in vec2 uv;
 in vec3 normal;
@@ -23,7 +22,7 @@ uniform float shiness;
 uniform float opacity;
 
 
-
+#include "../common/commonLight.glsl"
 
 uniform DirectionalLight directionalLight;
 

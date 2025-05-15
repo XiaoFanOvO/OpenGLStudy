@@ -1,3 +1,5 @@
+
+
 struct DirectionalLight{
 	vec3 direction;
 	vec3 color;
@@ -23,7 +25,6 @@ struct SpotLight{
 	float innerLine;
 	float specularIntensity;
 };
-
 
 //计算漫反射光照
 vec3 calculateDiffuse(vec3 lightColor, vec3 objectColor, vec3 lightDir, vec3 normal){
@@ -54,9 +55,8 @@ vec3 calculateSpecular(vec3 lightColor, vec3 lightDir, vec3 normal, vec3 viewDir
 	return specularColor;
 }
 
-vec3 calculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir){
+vec3 calculateSpotLight(vec3 objectColor, SpotLight light, vec3 normal, vec3 viewDir){
 	//计算光照的通用数据
-	vec3 objectColor  = texture(sampler, uv).xyz;
 	vec3 lightDir = normalize(worldPosition - light.position);
 	vec3 targetDir = normalize(light.targetDirection);
 

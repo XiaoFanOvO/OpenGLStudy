@@ -65,12 +65,15 @@ vec3 blur(){
 
 void main()
 {
-	vec3 color = texture(screenTexSampler, uv).rgb;
-	//1 将sRGB变换为RGB(线性)
-	//color = pow(color, vec3(2.2));
-	//2 与光照进行计算
+	//vec3 color = colorInvert(texture(screenTexSampler, uv).rgb);
+	//vec3 color = gray(texture(screenTexSampler, uv).rgb);
+	//vec3 color = grayCorrect(texture(screenTexSampler, uv).rgb);
+//	vec3 color = texture(screenTexSampler, uv).rgb;
+//	vec3 color = blur();
 
-	//3 最终颜色要抵抗屏幕gamma
+	vec3 color = texture(screenTexSampler, uv).rgb;
+
+	//2 最终颜色要抵抗屏幕gamma
 	color = pow(color, vec3(1.0/2.2));
 
 	FragColor = vec4(color, 1.0);

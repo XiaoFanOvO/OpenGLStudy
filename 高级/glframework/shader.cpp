@@ -11,30 +11,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	std::string vertexCode;
 	std::string fragmentCode;
 
-	//声明用于读取vs跟fs文件的inFileStream
-	std::ifstream vShaderFile;
-	std::ifstream fShaderFile;
-
-	//保证ifstream遇到问题的时候可以抛出异常
-	vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	try {
-		//1 打开文件
-		vShaderFile.open(vertexPath);
-		fShaderFile.open(fragmentPath);
-		
-		//2 将文件输入流当中的字符串输入到stringStream里面
-		std::stringstream vShaderStream, fShaderStream;
-		vShaderStream << vShaderFile.rdbuf();
-		fShaderStream << fShaderFile.rdbuf();
-
-		//3 关闭文件
-		vShaderFile.close();
-		fShaderFile.close();
-
-		//4 将字符串从stringStream当中读取出来，转化到code String当中
-		vertexCode = vShaderStream.str();
-		fragmentCode = fShaderStream.str();
+		vertexCode = loadShader(vertexPath);
+		fragmentCode = loadShader(fragmentPath);
 	}
 	catch (std::ifstream::failure& e) {
 		std::cout << "ERROR: Shader File Error: " << e.what() << std::endl;
@@ -79,6 +58,33 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 }
 Shader::~Shader() {
 
+}
+
+std::string Shader::loadShader(const std::string& filePath) {
+	std::ifstream file(filePath);
+	std::stringstream shaderStream;
+	std::string line;
+
+	while (std::getline(file, line)) {
+		//判断是否含有#include
+		if (line.find("#include") != std::string::npos) {
+			//找到include包含的文件路径
+			auto start = line.find("\"");
+			auto end = line.find_last_of("\"");
+			std::string includeFile = line.substr(start + 1, end - start - 1);
+
+			//找到当前文件的文件目录
+			auto lastSlashPos = filePath.find_last_of("/\\");
+			auto folder = filePath.substr(0, lastSlashPos + 1);
+			auto totalPath = folder + includeFile;
+			shaderStream << loadShader(totalPath);
+		}
+		else {
+			shaderStream << line << "\n";
+		}
+	}
+
+	return shaderStream.str();
 }
 
 void Shader::begin() {

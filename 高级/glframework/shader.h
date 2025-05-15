@@ -7,6 +7,8 @@ class Shader {
 public:
 	Shader(const char* vertexPath, const char* fragmentPath);
 	~Shader();
+
+	std::string loadShader(const std::string& filePath);
 	
 	void begin();//开始使用当前Shader
 

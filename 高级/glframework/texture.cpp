@@ -172,7 +172,7 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int unit, uns
 	mWidth = width;
 	mHeight = height;
 	mUnit = unit;
-	
+
 	glGenTextures(1, &mTexture);
 	glActiveTexture(GL_TEXTURE0 + mUnit);
 	glBindTexture(GL_TEXTURE_2D, mTexture);

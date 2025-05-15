@@ -125,7 +125,6 @@ vec3 calculatePointLight(PointLight light, vec3 normal ,vec3 viewDir){
 	vec3 specularColor = calculateSpecular(light.color, lightDir,normal, viewDir,light.specularIntensity); 
 
 	return (diffuseColor + specularColor)*attenuation;
-
 }
 
 void main()

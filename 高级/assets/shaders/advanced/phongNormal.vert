@@ -7,7 +7,7 @@ layout (location = 3) in vec3 aTangent;
 out vec2 uv;
 out vec3 normal;
 out vec3 worldPosition;
-out mat3 tbn;//矩阵也是可以通过插值给到每个像素点的
+out mat3 tbn;
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -32,8 +32,8 @@ void main()
 	
 	uv = aUV;
 //	normal =  transpose(inverse(mat3(modelMatrix))) * aNormal;
-	normal =  normalMatrix * aNormal;//世界空间的法线
-	vec3 tangent = normalize(mat3(modelMatrix) * aTangent);//获得世界空间的切线
-	vec3 bitangent = normalize(cross(normal, tangent)); //世界空间的副切线
-	tbn = mat3(tangent, bitangent, normal);//构建tbn矩阵(用于法线贴图的转换 从tbn空间-世界空间)
+	normal =  normalMatrix * aNormal;
+	vec3 tangent = normalize(mat3(modelMatrix) * aTangent);
+	vec3 bitangent = normalize(cross(normal, tangent));
+	tbn = mat3(tangent, bitangent, normal);
 }

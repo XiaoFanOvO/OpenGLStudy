@@ -12,6 +12,7 @@ public:
 	Texture*	mSpecularMask{ nullptr };
 	Texture*	mNormalMap{ nullptr };
 	Texture*	mParallaxMap{ nullptr };
+
 	float		mHeightScale{ 0.1f };
 	float		mLayerNum{ 10.0f };
 
