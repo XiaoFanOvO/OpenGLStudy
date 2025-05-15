@@ -30,4 +30,4 @@ add_subdirectory(imgui)
 #本工程所有cpp文件编译链接，生成exe
 add_executable(openglStudy "main.cpp" "glad.c" )
 
-target_link_libraries(openglStudy glfw3.lib  assimp-vc143-mtd.lib zlibstaticd.lib   wrapper app fw imguilib)
+target_link_libraries(openglStudy glfw3.lib  assimp-vc143-mtd.lib zlibstaticd.lib   wrapper app fw imguilib) 

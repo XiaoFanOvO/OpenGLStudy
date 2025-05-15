@@ -15,7 +15,7 @@ Geometry::Geometry(
 
 	glGenBuffers(1, &mPosVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mPosVbo);
-	glBufferData(GL_ARRAY_BUFFER, positions.size()*sizeof(float), positions.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), positions.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &mUvVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mUvVbo);
@@ -23,7 +23,7 @@ Geometry::Geometry(
 
 	glGenBuffers(1, &mNormalVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, mNormalVbo);
-	glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(float), normals.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
 
 	//3 EBO创建
 	glGenBuffers(1, &mEbo);
@@ -162,8 +162,7 @@ Geometry::Geometry(
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEbo);
 
 	glBindVertexArray(0);
-};
-
+}
 
 Geometry::~Geometry() {
 	if (mVao != 0) {
@@ -256,6 +255,21 @@ Geometry* Geometry::createBox(float size) {
 		-1.0f, 0.0f, 0.0f,
 	};
 
+	float tangents[] = {
+		// Front face
+		1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+		// Back face
+		-1.0f, 0.0f, 0.0f,  -1.0f, 0.0f, 0.0f,  -1.0f, 0.0f, 0.0f,  -1.0f, 0.0f, 0.0f,
+		// Top face
+		1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+		// Bottom face
+		1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f,
+		// Right face
+		0.0f, 0.0f, -1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f, -1.0f,
+		// Left face
+		0.0f, 0.0f, 1.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, 1.0f
+	};
+
 	unsigned int indices[] = {
 		0, 1, 2, 2, 3, 0,   // Front face
 		4, 5, 6, 6, 7, 4,   // Back face
@@ -266,18 +280,21 @@ Geometry* Geometry::createBox(float size) {
 	};
 
 	//2 VBO创建
-	GLuint& posVbo = geometry->mPosVbo, uvVbo = geometry->mUvVbo, normalVbo = geometry->mNormalVbo ;
-	glGenBuffers(1, &posVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
+	glGenBuffers(1, &geometry->mPosVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mPosVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &uvVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glGenBuffers(1, &geometry->mUvVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mUvVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &normalVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+	glGenBuffers(1, &geometry->mNormalVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mNormalVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(normals), normals, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &geometry->mTangentVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mTangentVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tangents), tangents, GL_STATIC_DRAW);
 
 	//3 EBO创建
 	glGenBuffers(1, &geometry->mEbo);
@@ -288,17 +305,21 @@ Geometry* Geometry::createBox(float size) {
 	glGenVertexArrays(1, &geometry->mVao);
 	glBindVertexArray(geometry->mVao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mPosVbo);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mUvVbo);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mNormalVbo);
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mTangentVbo);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
 	//5.4 加入ebo到当前的vao
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->mEbo);
@@ -316,8 +337,9 @@ Geometry* Geometry::createSphere(float radius) {
 	std::vector<GLfloat> positions{};
 	std::vector<GLfloat> uvs{};
 	std::vector<GLfloat> normals{};
+	std::vector<GLfloat> tangents{};
+
 	std::vector<GLuint> indices{};
-	std::vector<GLuint> tangents{};
 
 	//声明纬线与经线的数量
 	int numLatLines = 60;//纬线
@@ -339,7 +361,7 @@ Geometry* Geometry::createSphere(float radius) {
 
 			float u = 1.0 - (float)j / (float)numLongLines;
 			float v = 1.0 - (float)i / (float)numLatLines;
-			 
+
 			uvs.push_back(u);
 			uvs.push_back(v);
 
@@ -369,15 +391,71 @@ Geometry* Geometry::createSphere(float radius) {
 		}
 	}
 
-	//开始计算切线
-	tangents.resize(positions.size());//生成多少个0来填充数组
+
+	//********开始计算切线********
+	tangents.resize(positions.size());
 	//以三角形为单位进行indices的遍历
-	for (int i = 0; i < indices.size(); i += 3)
-	{
+	for (int i = 0; i < indices.size(); i += 3) {
 		//1 取出当前三角形的三个顶点的索引
+		int idx0 = indices[i];
+		int idx1 = indices[i + 1];
+		int idx2 = indices[i + 2];
 
+		//2 根据三个顶点的索引，从positions数组中找到三个顶点的位置信息
+		auto p0 = glm::vec3(positions[idx0 * 3], positions[idx0 * 3 + 1], positions[idx0 * 3 + 2]);
+		auto p1 = glm::vec3(positions[idx1 * 3], positions[idx1 * 3 + 1], positions[idx1 * 3 + 2]);
+		auto p2 = glm::vec3(positions[idx2 * 3], positions[idx2 * 3 + 1], positions[idx2 * 3 + 2]);
 
-		//2 根据三个顶点的索引  从positions数组中找到三个顶点的位置信息
+		//3 根据三个顶点的索引，从uvs数组中找到三个顶点的uv信息
+		auto uv0 = glm::vec2(uvs[idx0 * 2], uvs[idx0 * 2 + 1]);
+		auto uv1 = glm::vec2(uvs[idx1 * 2], uvs[idx1 * 2 + 1]);
+		auto uv2 = glm::vec2(uvs[idx2 * 2], uvs[idx2 * 2 + 1]);
+
+		//4 根据公式，计算当前三角形的tangent
+		glm::vec3 e0 = p1 - p0;
+		glm::vec3 e1 = p2 - p1;
+
+		glm::vec2 duv0 = uv1 - uv0;
+		glm::vec2 duv1 = uv2 - uv1;
+
+		float f = 1.0f / (duv0.x * duv1.y - duv1.x * duv0.y);
+
+		glm::vec3 tangent;
+		tangent.x = f * (duv1.y * e0.x - duv0.y * e1.x);
+		tangent.y = f * (duv1.y * e0.y - duv0.y * e1.y);
+		tangent.z = f * (duv1.y * e0.z - duv0.y * e1.z);
+		tangent = glm::normalize(tangent);
+
+		//5 针对本三角形的三个顶点的normal，使tangent正交化(三个不同的tangent）
+		auto normal0 = glm::normalize(glm::vec3(normals[idx0 * 3], normals[idx0 * 3 + 1], normals[idx0 * 3 + 2]));
+		auto normal1 = glm::normalize(glm::vec3(normals[idx1 * 3], normals[idx1 * 3 + 1], normals[idx1 * 3 + 2]));
+		auto normal2 = glm::normalize(glm::vec3(normals[idx2 * 3], normals[idx2 * 3 + 1], normals[idx2 * 3 + 2]));
+
+		auto tangent0 = tangent - glm::dot(tangent, normal0) * normal0;
+		auto tangent1 = tangent - glm::dot(tangent, normal1) * normal1;
+		auto tangent2 = tangent - glm::dot(tangent, normal2) * normal2;
+
+		//6 累加到每个顶点的tangent属性上
+		tangents[idx0 * 3] += tangent0.x;
+		tangents[idx0 * 3 + 1] += tangent0.y;
+		tangents[idx0 * 3 + 2] += tangent0.z;
+
+		tangents[idx1 * 3] += tangent1.x;
+		tangents[idx1 * 3 + 1] += tangent1.y;
+		tangents[idx1 * 3 + 2] += tangent1.z;
+
+		tangents[idx2 * 3] += tangent2.x;
+		tangents[idx2 * 3 + 1] += tangent2.y;
+		tangents[idx2 * 3 + 2] += tangent2.z;
+	}
+
+	//7 对每个顶点的最终tangent（累加值）进行normalize
+	for (int i = 0; i < tangents.size(); i += 3) {
+		glm::vec3 tangent = glm::vec3(tangents[i], tangents[i + 1], tangents[i + 2]);
+		tangent = glm::normalize(tangent);
+		tangents[i] = tangent.x;
+		tangents[i + 1] = tangent.y;
+		tangents[i + 2] = tangent.z;
 	}
 
 
@@ -397,6 +475,10 @@ Geometry* Geometry::createSphere(float radius) {
 	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
 
+	glGenBuffers(1, &geometry->mTangentVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mTangentVbo);
+	glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(float), tangents.data(), GL_STATIC_DRAW);
+
 	glGenBuffers(1, &geometry->mEbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->mEbo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
@@ -415,6 +497,10 @@ Geometry* Geometry::createSphere(float radius) {
 	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mTangentVbo);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->mEbo);
 
@@ -455,24 +541,34 @@ Geometry* Geometry::createPlane(float width, float height) {
 		0.0f, 0.0f, 1.0f,
 	};
 
+	float tangents[] = {
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+	};
+
 	unsigned int indices[] = {
 		0, 1, 2,
 		2, 3, 0
 	};
 
 	//2 VBO创建
-	GLuint& posVbo = geometry->mPosVbo, uvVbo = geometry->mUvVbo, normalVbo = geometry->mNormalVbo;
-	glGenBuffers(1, &posVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
+	glGenBuffers(1, &geometry->mPosVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mPosVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &uvVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glGenBuffers(1, &geometry->mUvVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mUvVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &normalVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+	glGenBuffers(1, &geometry->mNormalVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mNormalVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(normals), normals, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &geometry->mTangentVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mTangentVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tangents), tangents, GL_STATIC_DRAW);
 
 	//3 EBO创建
 	glGenBuffers(1, &geometry->mEbo);
@@ -483,17 +579,21 @@ Geometry* Geometry::createPlane(float width, float height) {
 	glGenVertexArrays(1, &geometry->mVao);
 	glBindVertexArray(geometry->mVao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, posVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mPosVbo);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, uvVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mUvVbo);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mNormalVbo);
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, geometry->mTangentVbo);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
 	//5.4 加入ebo到当前的vao
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->mEbo);

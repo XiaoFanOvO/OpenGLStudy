@@ -12,7 +12,8 @@ enum class MaterialType {
 	PhongEnvMaterial,
 	PhongInstanceMaterial,
 	GrassInstanceMaterial,
-	PhongNormalMaterial
+	PhongNormalMaterial,
+	PhongParallaxMaterial
 };
 
 class Material {

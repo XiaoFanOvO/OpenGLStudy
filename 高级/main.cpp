@@ -25,6 +25,7 @@
 #include "glframework/material/phongInstanceMaterial.h"
 #include "glframework/material/grassInstanceMaterial.h"
 #include "glframework/material/advanced/phongNormalMaterial.h"
+#include "glframework/material/advanced/phongParallaxMaterial.h"
 
 
 #include "glframework/mesh/mesh.h"
@@ -54,7 +55,7 @@ Framebuffer* fbo = nullptr;
 int WIDTH = 2560;
 int HEIGHT = 1440;
 
-GrassInstanceMaterial* grassMaterial = nullptr;
+PhongMaterial* mat = nullptr;
 
 //灯光们
 DirectionalLight* dirLight = nullptr;
@@ -102,72 +103,14 @@ void prepare() {
 	scene = new Scene();
 
 	//pass 01
-	float halfW = 2.5f, halfH = 3.5f;
-	std::vector<float> positions = {
-		-halfW, -halfH, 0.0f,
-		halfW, -halfH, 0.0f,
-		halfW, halfH, 0.0f,
-		-halfW, halfH, 0.0f,
-	};
+	auto geo = Geometry::createBox(5.0);
+	mat = new PhongMaterial();
+	mat->mDiffuse = new Texture("assets/textures/parallax/bricks.jpg", 0, GL_SRGB_ALPHA);
 
-	std::vector<float> uvs = {
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f,
-		0.0f, 1.0f
-	};
 
-	std::vector<float> normals = {
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-	};
-
-	std::vector<unsigned int> indices = {
-		0, 1, 2,
-		2, 3, 0
-	};
-
-	//计算tangents
-	std::vector<float> tangents = {};
-	//位置
-	glm::vec3 pos1(positions[0], positions[1], positions[2]);
-	glm::vec3 pos2(positions[3], positions[4], positions[5]);
-	glm::vec3 pos3(positions[6], positions[7], positions[8]);
-	//uv
-	glm::vec2 uv1(uvs[0], uvs[1]);
-	glm::vec2 uv2(uvs[2], uvs[3]);
-	glm::vec2 uv3(uvs[4], uvs[5]);
-
-	glm::vec3 e1 = pos2 - pos1;
-	glm::vec3 e2 = pos3 - pos2;
-
-	glm::vec2 dUV1 = uv2 - uv1;
-	glm::vec2 dUV2 = uv3 - uv2;
-
-	float f = 1.0f / (dUV1.x * dUV2.y - dUV2.x * dUV1.y);
-
-	glm::vec3 tangent;
-	tangent.x = f * (dUV2.y * e1.x - dUV1.y * e2.x);
-	tangent.y = f * (dUV2.y * e1.y - dUV1.y * e2.y);
-	tangent.z = f * (dUV2.y * e1.z - dUV1.y * e2.z);
-
-	for (int i = 0; i < 4; i++) {
-		tangents.push_back(tangent.x);
-		tangents.push_back(tangent.y);
-		tangents.push_back(tangent.z);
-	}
-
-	auto planeGeo = new Geometry(positions, normals, uvs, indices, tangents);
-	auto planeMat = new PhongNormalMaterial();
-	planeMat->mDiffuse = new Texture("assets/textures/normal/brickwall.jpg", 0, GL_SRGB_ALPHA);
-	planeMat->mNormalMap = new Texture("assets/textures/normal/normal_map.png", 1);
-	planeMat->mShiness = 32;
-	auto mesh = new Mesh(planeGeo, planeMat);
-	mesh->rotateX(-90.0f);
+	mat->mShiness = 32;
+	auto mesh = new Mesh(geo, mat);
 	sceneOff->addChild(mesh);
-
 
 	//pass 02
 	auto sgeo = Geometry::createScreenPlane();
@@ -176,16 +119,15 @@ void prepare() {
 	auto smesh = new Mesh(sgeo, smat);
 	scene->addChild(smesh);
 
-	
+
 	dirLight = new DirectionalLight();
-	//dirLight->mDirection = glm::vec3(0.0f, -0.4f, -1.0f);
-	dirLight->mDirection = glm::vec3(0.0f, -1.0f,0.0f);
+	dirLight->mDirection = glm::vec3(0.0f, -0.4f, -1.0f);
 	dirLight->mSpecularIntensity = 0.5f;
 
 	ambLight = new AmbientLight();
 	ambLight->mColor = glm::vec3(0.1f);
 
-}
+} 
 
 
 void prepareCamera() {
@@ -222,7 +164,9 @@ void renderIMGUI() {
 	ImGui::NewFrame();
 
 	//2 决定当前的GUI上面有哪些控件，从上到下
-	ImGui::Begin("GrassMaterialEditor");
+	ImGui::Begin("MaterialEditor");
+	ImGui::SliderFloat("heightScale", &mat->mHeightScale, 0.0f, 1.0f);
+	ImGui::InputFloat("layerNum", &mat->mLayerNum);
 	ImGui::End();
 
 	//3 执行UI渲染
