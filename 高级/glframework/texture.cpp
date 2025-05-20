@@ -73,6 +73,33 @@ Texture* Texture::createDepthStencilAttachment(
 	return dsTex;
 }
 
+Texture* Texture::createDepthAttachment(
+	unsigned int width,
+	unsigned int height,
+	unsigned int unit
+) {
+	Texture* depthTex = new Texture();
+
+	unsigned int depth;
+	glGenTextures(1, &depth);
+	glBindTexture(GL_TEXTURE_2D, depth);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);//只有深度信息
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
+
+	depthTex->mTexture = depth;
+	depthTex->mWidth = width;
+	depthTex->mHeight = height;
+	depthTex->mUnit = unit;
+
+	return depthTex;
+};
+
 Texture::Texture() {
 
 }

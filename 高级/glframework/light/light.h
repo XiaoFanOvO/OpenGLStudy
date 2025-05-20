@@ -1,7 +1,8 @@
 #pragma once
 #include "../core.h"
+#include "../object.h"
 
-class Light {
+class Light : public Object {
 public:
 	Light();
 	~Light();

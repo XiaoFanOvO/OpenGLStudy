@@ -29,6 +29,9 @@ Renderer::Renderer() {
 	mPhongNormalShader = new Shader("assets/shaders/advanced/phongNormal.vert", "assets/shaders/advanced/phongNormal.frag");
 	mPhongParallaxShader = new Shader("assets/shaders/advanced/phongParallax.vert", "assets/shaders/advanced/phongParallax.frag");
 	mPhongShader = new Shader("assets/shaders/advanced/phong.vert", "assets/shaders/advanced/phong.frag");
+	mShadowShader = new Shader("assets/shaders/advanced/shadow.vert", "assets/shaders/advanced/shadow.frag");
+
+	mShadowFBO = Framebuffer::createShadowFbo(2048,2048);//和屏幕无关,这里可以自己随便规定这张shadowmap要多大
 }
 
 Renderer::~Renderer() {
@@ -230,7 +233,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 			shader->setFloat("directionalLight.intensity", dirLight->mIntensity);
 
@@ -270,7 +273,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 
 
@@ -345,7 +348,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 
 
@@ -381,7 +384,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 
 
@@ -420,7 +423,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 
 
@@ -476,7 +479,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 			shader->setFloat("directionalLight.intensity", dirLight->mIntensity);
 
@@ -519,7 +522,7 @@ void Renderer::renderObject(
 			//光源参数的uniform更新
 			//directionalLight 的更新
 			shader->setVector3("directionalLight.color", dirLight->mColor);
-			shader->setVector3("directionalLight.direction", dirLight->mDirection);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
 			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
 			shader->setFloat("directionalLight.intensity", dirLight->mIntensity);
 

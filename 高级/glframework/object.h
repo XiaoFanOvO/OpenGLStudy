@@ -31,6 +31,8 @@ public:
 
 	glm::mat4 getModelMatrix()const;
 
+	glm::vec3 getDirection() const;
+
 	//¸¸×Ó¹ØÏµ
 	void addChild(Object* obj);
 	std::vector<Object*>  getChildren();

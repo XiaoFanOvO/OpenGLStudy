@@ -9,6 +9,7 @@
 #include "../light/ambientLight.h"
 #include "../shader.h"
 #include "../scene.h"
+#include "../framebuffer/framebuffer.h"
 
 class Renderer {
 public:
@@ -81,8 +82,15 @@ private:
 	Shader* mPhongNormalShader{ nullptr };
 	Shader* mPhongParallaxShader{ nullptr };
 
+	Shader* mShadowShader{nullptr};
+
 	//不透明物体与透明物体的队列
 	//注意！！*****每一帧绘制前，需要清空两个队列********
 	std::vector<Mesh*>	mOpacityObjects{};
 	std::vector<Mesh*>	mTransparentObjects{};
+
+public:
+	Framebuffer* mShadowFBO{ nullptr };
+
+
 };

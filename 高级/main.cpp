@@ -105,13 +105,23 @@ void prepare() {
 	scene = new Scene();
 
 	//pass 01
-	auto geo = Geometry::createBox(5.0);
+	auto geo = Geometry::createBox(2.0);
 	auto mat = new PhongMaterial();
 	mat->mDiffuse = new Texture("assets/textures/parallax/bricks.jpg", 0, GL_SRGB_ALPHA);
 
 	mat->mShiness = 32;
 	auto mesh = new Mesh(geo, mat);
 	sceneOff->addChild(mesh);
+
+	auto groundGeo = Geometry::createPlane(10, 10);
+	mat = new PhongMaterial();
+	mat->mDiffuse = new Texture("assets/textures/grass.jpg", 0, GL_SRGB_ALPHA);
+	mat->mShiness = 32;
+
+	auto groundMesh = new Mesh(groundGeo, mat);
+	groundMesh->setPosition(glm::vec3(0.0, -1.0f, 0.0f));
+	groundMesh->rotateX(-90.0f);
+	sceneOff->addChild(groundMesh);
 
 	//pass 02
 	auto sgeo = Geometry::createScreenPlane();
@@ -122,7 +132,8 @@ void prepare() {
 
 	
 	dirLight = new DirectionalLight();
-	dirLight->mDirection = glm::vec3(0.0f, -0.4f,-1.0f);
+	dirLight->rotateY(45.0f);
+	dirLight->rotateX(-25.0f);
 	dirLight->mSpecularIntensity = 0.5f;
 
 	ambLight = new AmbientLight();
