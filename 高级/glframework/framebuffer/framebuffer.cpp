@@ -1,6 +1,5 @@
 #include "framebuffer.h"
 
-
 Framebuffer* Framebuffer::createShadowFbo(unsigned int width, unsigned int height) {
 	Framebuffer* fb = new Framebuffer();
 	fb->mWidth = width;
@@ -10,16 +9,16 @@ Framebuffer* Framebuffer::createShadowFbo(unsigned int width, unsigned int heigh
 	glBindFramebuffer(GL_FRAMEBUFFER, fb->mFBO);
 
 	fb->mDepthAttachment = Texture::createDepthAttachment(width, height, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fb->mDepthAttachment->getTexture(), 0);//最后这个0是0号mipmap,也就是贴图本身
-
-	glDrawBuffer(GL_NONE); //显式地告诉opengl,我们当前这个fbo没有颜色输出
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);//解绑
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fb->mDepthAttachment->getTexture(), 0);
 	
+	glDrawBuffer(GL_NONE);//显式的告诉opengl， 我们当前这个fbo没有颜色输出
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	return fb;
 }
 
 Framebuffer::Framebuffer() {
-	
+
 }
 
 Framebuffer::Framebuffer(unsigned int width, unsigned int height) {

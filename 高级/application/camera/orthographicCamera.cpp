@@ -1,6 +1,6 @@
 #include "orthographicCamera.h"
 
-OrthographicCamera::OrthographicCamera(float l, float r, float t, float b, float n, float f) {
+OrthographicCamera::OrthographicCamera(float l, float r, float b, float t, float n, float f) {
 	mLeft = l;
 	mRight = r;
 	mTop = t;

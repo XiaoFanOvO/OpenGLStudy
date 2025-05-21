@@ -33,6 +33,8 @@ public:
 		AmbientLight* ambLight
 	);
 
+	void renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLight* dirLight, Framebuffer* fbo);
+	glm::mat4 getLightMatrix(DirectionalLight* dirLight);
 
 
 	//void render(
@@ -82,7 +84,8 @@ private:
 	Shader* mPhongNormalShader{ nullptr };
 	Shader* mPhongParallaxShader{ nullptr };
 
-	Shader* mShadowShader{nullptr};
+	Shader* mShadowShader{ nullptr };
+	Shader* mPhongShadowShader{ nullptr };
 
 	//不透明物体与透明物体的队列
 	//注意！！*****每一帧绘制前，需要清空两个队列********
@@ -91,6 +94,4 @@ private:
 
 public:
 	Framebuffer* mShadowFBO{ nullptr };
-
-
 };

@@ -66,11 +66,12 @@ glm::mat4 Object::getModelMatrix()const {
 	return transform;
 }
 
-glm::vec3 Object::getDirection() const {
-	auto modelMatrix = glm::mat(getModelMatrix());
-	auto dir = glm::normalize(-modelMatrix[2]);//第二个列向量就是他朝向的方向(也就是z轴) 需要加个负号变成负Z轴 因为看向了负Z轴
+glm::vec3 Object::getDirection()const {
+	auto modelMatrix = glm::mat3(getModelMatrix());
+	auto dir = glm::normalize(-modelMatrix[2]);
+
 	return dir;
-};
+}
 
 
 void Object::addChild(Object* obj) {

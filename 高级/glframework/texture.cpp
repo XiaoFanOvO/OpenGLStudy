@@ -84,11 +84,10 @@ Texture* Texture::createDepthAttachment(
 	glGenTextures(1, &depth);
 	glBindTexture(GL_TEXTURE_2D, depth);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);//只有深度信息
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
 
@@ -98,7 +97,7 @@ Texture* Texture::createDepthAttachment(
 	depthTex->mUnit = unit;
 
 	return depthTex;
-};
+}
 
 Texture::Texture() {
 

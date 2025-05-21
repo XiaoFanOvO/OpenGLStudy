@@ -26,6 +26,7 @@
 #include "glframework/material/grassInstanceMaterial.h"
 #include "glframework/material/advanced/phongNormalMaterial.h"
 #include "glframework/material/advanced/phongParallaxMaterial.h"
+#include "glframework/material/advanced/phongShadowMaterial.h"
 
 
 #include "glframework/mesh/mesh.h"
@@ -46,17 +47,37 @@
 #include "application/assimpInstanceLoader.h"
 
 /*  
-*┌────────────────────────────────────────────────┐
-*│　目	   标： Shader中加入Include功能
+*┌──────────────────────────────────────────────────┐
+*│　目	   标： 阴影系统-ShadowMap
 *│　讲    师： 赵新政(Carma Zhao)
 *	 拆分目标： 
-*				干就完了
-*└───────────────────────────────────────────────┘
+*				准备工作：
+*					1 改造Light类，继承Object（并且为Object增加getDirection函数）
+*					2 更改使用光源的代码们
+* 
+*				ShadowPass：
+*					Shader制作：
+*						1 创建shadow.vert/frag，渲染阴影贴图专用 
+*						2 在Renderer中创建shadowShader，用于做ShadowMap渲染
+
+*					渲染目标：
+*						1 在Texture中增加创建DepthAttachment的创建函数
+*						2 在FrameBuffer中增加创建ShadowFBO的创建函数
+*						3 在Renderer中创建ShadowFBO，用于做阴影ShadowMap的渲染目标（renderTarget）
+*					
+*					渲染器更改：
+*						在Renderer中加入RenderShadowMap函数，在真正渲染物体之前，先把ShadowMap做出来
+*						注意1： 做好排除工作：ScreenMaterial的物体不参与ShadowPass渲染，若是PostProcessPass
+*						        则不进行RenderShadowMap的操作（防止污染ShadowMap）
+*						注意2： 做好备份工作，先前的fbo，先前的viewport等参数，都需要做备份与恢复
+*└──────────────────────────────────────────────────┘
 */
 Renderer* renderer = nullptr;
 Scene* sceneOff = nullptr;
 Scene* scene = nullptr;
 Framebuffer* fbo = nullptr;
+
+PhongShadowMaterial* mat = nullptr;
 
 int WIDTH = 2560;
 int HEIGHT = 1440;
@@ -106,7 +127,7 @@ void prepare() {
 
 	//pass 01
 	auto geo = Geometry::createBox(2.0);
-	auto mat = new PhongMaterial();
+	mat = new PhongShadowMaterial();
 	mat->mDiffuse = new Texture("assets/textures/parallax/bricks.jpg", 0, GL_SRGB_ALPHA);
 
 	mat->mShiness = 32;
@@ -114,26 +135,28 @@ void prepare() {
 	sceneOff->addChild(mesh);
 
 	auto groundGeo = Geometry::createPlane(10, 10);
-	mat = new PhongMaterial();
+	//mat = new PhongShadowMaterial();
 	mat->mDiffuse = new Texture("assets/textures/grass.jpg", 0, GL_SRGB_ALPHA);
 	mat->mShiness = 32;
 
 	auto groundMesh = new Mesh(groundGeo, mat);
-	groundMesh->setPosition(glm::vec3(0.0, -1.0f, 0.0f));
+	groundMesh->setPosition(glm::vec3(0.0, 0.0, 0.0f));
 	groundMesh->rotateX(-90.0f);
 	sceneOff->addChild(groundMesh);
 
-	//pass 02
+	//pass 02 postProcessPass:后处理pass
 	auto sgeo = Geometry::createScreenPlane();
 	auto smat = new ScreenMaterial();
 	smat->mScreenTexture = fbo->mColorAttachment;
+	//smat->mScreenTexture = renderer->mShadowFBO->mDepthAttachment;
 	auto smesh = new Mesh(sgeo, smat);
 	scene->addChild(smesh);
 
 	
 	dirLight = new DirectionalLight();
+	dirLight->setPosition(glm::vec3(3.0f, 3.0f, 3.0f));
 	dirLight->rotateY(45.0f);
-	dirLight->rotateX(-25.0f);
+	dirLight->rotateX(-45.0f);
 	dirLight->mSpecularIntensity = 0.5f;
 
 	ambLight = new AmbientLight();
@@ -177,6 +200,7 @@ void renderIMGUI() {
 
 	//2 决定当前的GUI上面有哪些控件，从上到下
 	ImGui::Begin("MaterialEditor");
+	ImGui::SliderFloat("bias:", &mat->mBias, 0.0f, 0.01f, "%.4f");
 	ImGui::End();
 
 	//3 执行UI渲染
