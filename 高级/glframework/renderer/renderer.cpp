@@ -13,6 +13,7 @@
 #include "../material/advanced/phongShadowMaterial.h"
 #include "../mesh/instancedMesh.h"
 #include "../../application/camera/orthographicCamera.h"
+#include "../light/shadow/directionalLightShadow.h"
 #include <string>//stl string
 #include <algorithm>
 
@@ -33,8 +34,6 @@ Renderer::Renderer() {
 	mPhongShader = new Shader("assets/shaders/advanced/phong.vert", "assets/shaders/advanced/phong.frag");
 	mShadowShader = new Shader("assets/shaders/advanced/shadow.vert", "assets/shaders/advanced/shadow.frag");
 	mPhongShadowShader = new Shader("assets/shaders/advanced/phongShadow.vert", "assets/shaders/advanced/phongShadow.frag");
-
-	mShadowFBO = Framebuffer::createShadowFbo(2048, 2048);//和屏幕无关,这里可以自己随便规定这张shadowmap要多大
 }
 
 Renderer::~Renderer() {
@@ -106,7 +105,7 @@ void Renderer::render(
 	//需要做好备份工作,特别是fbo和viewport,后面要恢复,否则影响到后面的渲染
 	//这里先做不透明物体的阴影
 	//还要做排除,postprocess不做shadowmap
-	renderShadowMap(mOpacityObjects, dirLight, mShadowFBO);
+	renderShadowMap(mOpacityObjects, dirLight, dirLight->mShadow->mRenderTarget);
 
 	//3 渲染两个队列
 	for (int i = 0; i < mOpacityObjects.size(); i++) {
@@ -220,7 +219,8 @@ void Renderer::renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLigh
 
 	//4 开始绘制
 	glClear(GL_DEPTH_BUFFER_BIT);
-	auto lightMatrix = getLightMatrix(dirLight);
+	DirectionalLightShadow* dirShadow = (DirectionalLightShadow*)dirLight->mShadow;
+	auto lightMatrix = dirShadow->getLightMatrix(dirLight->getModelMatrix());
 	mShadowShader->begin();
 	mShadowShader->setMatrix4x4("lightMatrix", lightMatrix);//所有mesh共有
 	for (int i = 0; i < meshes.size(); i++)
@@ -249,17 +249,17 @@ void Renderer::renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLigh
 	glViewport(preViewport[0], preViewport[1], preViewport[2], preViewport[3]);
 }
 
-glm::mat4 Renderer::getLightMatrix(DirectionalLight* dirLight) {
-	//1 viewMatrix
-	auto lightViewMatrix = glm::inverse(dirLight->getModelMatrix());
-	//2 projection(正交投影)
-	float size = 6.0f;
-	auto lightCamera = new OrthographicCamera(-size, size, -size, size, 0.1f, 80);
-	auto lightProjectionMatrix = lightCamera->getProjectionMatrix();
-
-	//3 求lightMatrix并返回
-	return lightProjectionMatrix * lightViewMatrix;
-}
+//glm::mat4 Renderer::getLightMatrix(DirectionalLight* dirLight) {
+//	//1 viewMatrix
+//	auto lightViewMatrix = glm::inverse(dirLight->getModelMatrix());
+//	//2 projection(正交投影)
+//	float size = 6.0f;
+//	auto lightCamera = new OrthographicCamera(-size, size, -size, size, 0.1f, 80);
+//	auto lightProjectionMatrix = lightCamera->getProjectionMatrix();
+//
+//	//3 求lightMatrix并返回
+//	return lightProjectionMatrix * lightViewMatrix;
+//}
 
 
 //针对单个object进行渲染
@@ -479,7 +479,7 @@ void Renderer::renderObject(
 			shader->setFloat("shiness", phongMat->mShiness);
 
 			shader->setVector3("ambientColor", ambLight->mColor);
-
+			 
 			//相机信息更新
 			shader->setVector3("cameraPosition", camera->mPosition);
 
@@ -631,19 +631,20 @@ void Renderer::renderObject(
 												break;
 		case MaterialType::PhongShadowMaterial: {
 			PhongShadowMaterial* phongShadowMat = (PhongShadowMaterial*)material;
-
+			DirectionalLightShadow* dirShadow = (DirectionalLightShadow*)dirLight->mShadow;
 			//diffuse贴图帧更新
 			//将纹理采样器与纹理单元进行挂钩
 			shader->setInt("sampler", 0);
 			//将纹理与纹理单元进行挂钩
 			phongShadowMat->mDiffuse->bind();
 
+			//shadow相关
 			shader->setInt("shadowMapSampler", 1);
-			mShadowFBO->mDepthAttachment->setUnit(1);
-			mShadowFBO->mDepthAttachment->bind();
+			dirShadow->mRenderTarget->mDepthAttachment->setUnit(1);
+			dirShadow->mRenderTarget->mDepthAttachment->bind();
 
 
-			shader->setMatrix4x4("lightMatrix", getLightMatrix(dirLight));
+			shader->setMatrix4x4("lightMatrix", dirShadow->getLightMatrix(dirLight->getModelMatrix()));
 
 			//高光蒙版的帧更新
 			/*shader->setInt("specularMaskSampler", 1);
@@ -673,8 +674,10 @@ void Renderer::renderObject(
 
 			//透明度
 			shader->setFloat("opacity", phongShadowMat->mOpacity);
-			//透明度
-			shader->setFloat("bias", phongShadowMat->mBias);
+			//bias
+			shader->setFloat("bias", dirShadow->mBias);
+			shader->setFloat("diskTightness", dirShadow->mDiskTightness);
+			shader->setFloat("pcfRadius", dirShadow->mPcfRadius);
 
 		}
 										break;

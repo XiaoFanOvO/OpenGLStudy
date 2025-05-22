@@ -24,126 +24,117 @@ uniform float shiness;
 uniform float opacity;
 
 
-struct DirectionalLight{
-	vec3 direction;
-	vec3 color;
-	float specularIntensity;
-	float intensity;
-};
-
-struct PointLight{
-	vec3 position;
-	vec3 color;
-	float specularIntensity;
-
-	float k2;
-	float k1;
-	float kc;
-};
-
-struct SpotLight{
-	vec3 position;
-	vec3 targetDirection;
-	vec3 color;
-	float outerLine;
-	float innerLine;
-	float specularIntensity;
-};
+#include "../common/commonLight.glsl"
 
 uniform DirectionalLight directionalLight;
 
-//计算漫反射光照
-vec3 calculateDiffuse(vec3 lightColor, vec3 objectColor, vec3 lightDir, vec3 normal){
-	float diffuse = clamp(dot(-lightDir, normal), 0.0,1.0);
-	vec3 diffuseColor = lightColor * diffuse * objectColor;
+#define NUM_SAMPLES 32 
+#define PI 3.141592653589793
+#define PI2 6.283185307179586
 
-	return diffuseColor;
+float rand_2to1(vec2 uv ) { 
+  // 0 - 1
+	const highp float a = 12.9898, b = 78.233, c = 43758.5453;
+	highp float dt = dot( uv.xy, vec2( a,b ) ), sn = mod( dt, PI );
+	return fract(sin(sn) * c);
 }
 
-//计算镜面反射光照
-vec3 calculateSpecular(vec3 lightColor, vec3 lightDir, vec3 normal, vec3 viewDir, float intensity){
-	//1 防止背面光效果
-	float dotResult = dot(-lightDir, normal);
-	float flag = step(0.0, dotResult);
-	vec3 lightReflect = normalize(reflect(lightDir,normal));
+uniform float diskTightness;
+vec2 disk[NUM_SAMPLES];
+//生成泊松采样盘
+void poissonDiskSamples(vec2 randomSeed){
+	//1 初始弧度
+	float angle = rand_2to1(randomSeed) * PI2;
 
-	//2 jisuan specular
-	float specular = max(dot(lightReflect,-viewDir), 0.0);
+	//2 初始半径
+	float radius = 1.0 / float(NUM_SAMPLES);
 
-	//3 控制光斑大小
-	specular = pow(specular, shiness);
+	//3 弧度步长(黄金分割)
+	float angleStep = 3.883222077450933;
 
-	//float specularMask = texture(specularMaskSampler, uv).r;
+	//4 半径步长
+	float radiusStep = radius;
 
-	//4 计算最终颜色
-	vec3 specularColor = lightColor * specular * flag * intensity;
-
-	return specularColor;
+	//5 循环生成
+	for(int i = 0;i < NUM_SAMPLES;i++){
+		disk[i] = vec2(cos(angle), sin(angle)) * pow(radius, diskTightness);
+		radius += radiusStep;
+		angle += angleStep;
+	}
 }
 
-vec3 calculateSpotLight(vec3 objectColor, SpotLight light, vec3 normal, vec3 viewDir){
-	//计算光照的通用数据
-	vec3 lightDir = normalize(worldPosition - light.position);
-	vec3 targetDir = normalize(light.targetDirection);
 
-	//计算spotlight的照射范围
-	float cGamma = dot(lightDir, targetDir);
-	float intensity =clamp( (cGamma - light.outerLine) / (light.innerLine - light.outerLine), 0.0, 1.0);
 
-	//1 计算diffuse
-	vec3 diffuseColor = calculateDiffuse(light.color,objectColor, lightDir,normal);
-
-	//2 计算specular
-	vec3 specularColor = calculateSpecular(light.color, lightDir,normal, viewDir,light.specularIntensity); 
-
-	return (diffuseColor + specularColor)*intensity;
+float getBias(vec3 normal, vec3 lightDir){
+	vec3 normalN = normalize(normal);
+	vec3 lightDirN = normalize(lightDir);
+	
+	return max(bias * (1.0 - dot(normalN, lightDirN)), 0.0005);
 }
 
-vec3 calculateDirectionalLight(vec3 objectColor, DirectionalLight light, vec3 normal ,vec3 viewDir){
-	light.color *= light.intensity;
-
-	//计算光照的通用数据
-	vec3 lightDir = normalize(light.direction);
-
-	//1 计算diffuse
-	vec3 diffuseColor = calculateDiffuse(light.color,objectColor, lightDir,normal);
-
-	//2 计算specular
-	vec3 specularColor = calculateSpecular(light.color, lightDir,normal, viewDir,light.specularIntensity); 
-
-	return diffuseColor + specularColor;
-}
-
-vec3 calculatePointLight(vec3 objectColor, PointLight light, vec3 normal ,vec3 viewDir){
-	//计算光照的通用数据
-	vec3 lightDir = normalize(worldPosition - light.position);
-
-	//计算衰减
-	float dist = length(worldPosition - light.position);
-	float attenuation = 1.0 / (light.k2 * dist * dist + light.k1 * dist + light.kc);
-
-	//1 计算diffuse
-	vec3 diffuseColor = calculateDiffuse(light.color,objectColor, lightDir,normal);
-
-	//2 计算specular
-	vec3 specularColor = calculateSpecular(light.color, lightDir,normal, viewDir,light.specularIntensity); 
-
-	return (diffuseColor + specularColor)*attenuation;
-}
-
-float calculateShadow(){
+float calculateShadow(vec3 normal, vec3 lightDir){
 	//1 找到当前像素在光源空间内的NDC坐标
-	vec3 lightNDC = lightSpaceClipCoord.xyz / lightSpaceClipCoord.w;
+	vec3 lightNDC = lightSpaceClipCoord.xyz/lightSpaceClipCoord.w;
+
 	//2 找到当前像素在ShadowMap上的uv
-	vec3 projCoord = lightNDC * 0.5 + 0.5;//这里0.5会被自动扩展为三维数组
+	vec3 projCoord = lightNDC * 0.5 + 0.5;
 	vec2 uv = projCoord.xy;
-	//3 使用这个uv对shaderMap进行采样,得到ClosestDepth
-	float closestDepth = texture(shadowMapSampler, uv).r;//深度贴图只有一个通道,也就是r
+
+	//3 使用这个uv对ShadowMap进行采样，得到ClosestDepth
+	float closestDepth = texture(shadowMapSampler, uv).r;
+
 	//4 对比当前像素在光源空间内的深度值与ClosestDepth的大小
 	float selfDepth = projCoord.z;
 
-	float shadow = (selfDepth - bias) > closestDepth ? 1.0 : 0.0;
+	float shadow = (selfDepth - getBias(normal, lightDir)) > closestDepth? 1.0:0.0;
+
 	return shadow;
+}
+
+//float pcf(vec3 normal, vec3 lightDir){
+//	//1 找到当前像素在光源空间内的NDC坐标
+//	vec3 lightNDC = lightSpaceClipCoord.xyz/lightSpaceClipCoord.w;
+//
+//	//2 找到当前像素在ShadowMap上的uv
+//	vec3 projCoord = lightNDC * 0.5 + 0.5;
+//	vec2 uv = projCoord.xy;
+//	float depth = projCoord.z;
+//
+//	vec2 texelSize = 1.0 / textureSize(shadowMapSampler, 0);
+//
+//	//3  遍历九宫格，每一个的深度值都需要与当前像素在光源下的深度值进行对比
+//	float sum = 0.0;
+//	for(int x = -1;x <= 1;x++){
+//		for(int y = -1;y <= 1;y++){
+//			float closestDepth = texture(shadowMapSampler,uv + vec2(x,y) * texelSize).r;
+//			sum += closestDepth < (depth - getBias(normal, lightDir))?1.0:0.0;
+//		}
+//	}
+//	return sum / 9.0;
+//}
+
+uniform float pcfRadius;//采样半径 对需要添加的uv做缩放
+float pcf(vec3 normal, vec3 lightDir){
+	//1 找到当前像素在光源空间内的NDC坐标
+	vec3 lightNDC = lightSpaceClipCoord.xyz/lightSpaceClipCoord.w;
+
+	//2 找到当前像素在ShadowMap上的uv
+	vec3 projCoord = lightNDC * 0.5 + 0.5;
+	vec2 uv = projCoord.xy;
+	float depth = projCoord.z;
+
+	poissonDiskSamples(uv);
+
+	vec2 texelSize = 1.0 / textureSize(shadowMapSampler, 0);
+
+	//3  遍历poisson采样盘的每一个采样点，每一个的深度值都需要与当前像素在光源下的深度值进行对比
+	float sum = 0.0;
+	for(int i = 0;i < NUM_SAMPLES;i++){
+		float closestDepth = texture(shadowMapSampler,uv + disk[i] * pcfRadius).r;
+		sum += closestDepth < (depth - getBias(normal, lightDir))?1.0:0.0;
+	}
+
+	return sum / float(NUM_SAMPLES);
 }
 
 void main()
@@ -162,8 +153,8 @@ void main()
 	float alpha =  texture(sampler, uv).a;
 
 	vec3 ambientColor = objectColor * ambientColor;
-	
-	float shadow = calculateShadow();
+
+	float shadow = pcf(normal, -directionalLight.direction);
 	vec3 finalColor = result * (1.0 - shadow) + ambientColor;
 	
 

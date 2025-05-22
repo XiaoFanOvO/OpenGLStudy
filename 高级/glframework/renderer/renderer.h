@@ -34,7 +34,6 @@ public:
 	);
 
 	void renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLight* dirLight, Framebuffer* fbo);
-	glm::mat4 getLightMatrix(DirectionalLight* dirLight);
 
 
 	//void render(
@@ -92,6 +91,4 @@ private:
 	std::vector<Mesh*>	mOpacityObjects{};
 	std::vector<Mesh*>	mTransparentObjects{};
 
-public:
-	Framebuffer* mShadowFBO{ nullptr };
 };

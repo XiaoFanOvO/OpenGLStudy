@@ -200,7 +200,26 @@ void renderIMGUI() {
 
 	//2 决定当前的GUI上面有哪些控件，从上到下
 	ImGui::Begin("MaterialEditor");
-	ImGui::SliderFloat("bias:", &mat->mBias, 0.0f, 0.01f, "%.4f");
+	ImGui::SliderFloat("bias:", &dirLight->mShadow->mBias, 0.0f, 0.01f, "%.4f");
+	ImGui::SliderFloat("tightness:", &dirLight->mShadow->mDiskTightness, 0.0f, 1.0f, "%.3f");
+	ImGui::SliderFloat("pcfRadius:", &dirLight->mShadow->mPcfRadius, 0.0f, 1.0f, "%.4f");
+
+
+	int width = dirLight->mShadow->mRenderTarget->mWidth;
+	int height = dirLight->mShadow->mRenderTarget->mHeight;
+	if (ImGui::SliderInt("FBO width:", &width, 1, 4096) || ImGui::SliderInt("FBO height:", &height, 1, 4096)) {
+		dirLight->mShadow->setRenderTargetSize(width, height);
+	}
+
+
+
+	auto pos = dirLight->getPosition();
+	if (ImGui::SliderFloat("light.x:", &pos.x, 0.0f, 50.0f, "%.2f"))
+	{
+		dirLight->setPosition(pos);
+	};
+
+
 	ImGui::End();
 
 	//3 执行UI渲染
