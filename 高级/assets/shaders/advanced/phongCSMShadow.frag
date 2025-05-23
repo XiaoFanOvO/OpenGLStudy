@@ -180,6 +180,28 @@ float pcss(vec3 lightSpacePosition, vec4 lightSpaceClipCoord, vec3 normal, vec3 
 	return pcf(normal, lightDir, penumbra * pcfRadius);
 }
 
+uniform int csmLayerCount;
+uniform float csmLayers[20];
+uniform mat4 viewMatrix;
+
+//判断当前像素是位于layers中的第几层
+int getCurrentLayer(){
+	//求当前像素在相机坐标系下的坐标
+	vec3 positionCameraSpace = (viewMatrix * vec4(worldPosition, 1.0)).xyz;
+	float z = -positionCameraSpace.z;
+
+	int layer = 0;
+	for(int i = 0;i <= csmLayerCount;i++){
+		if(z < csmLayers[i]){
+			layer = i - 1;
+			break;
+		}
+	}
+
+	return layer;
+}
+
+
 void main()
 {
 //环境光计算
@@ -199,6 +221,28 @@ void main()
 
 	float shadow = pcss(lightSpacePosition, lightSpaceClipCoord, normal, -directionalLight.direction);
 	vec3 finalColor = result * (1.0 - shadow) + ambientColor;
+
+	int layer = getCurrentLayer();
+	vec3 maskColor = vec3(0.0,0.0,0.0);
+	switch(layer){
+		case 0:
+			maskColor = vec3(1.0,0.0,0.0);
+		break;
+		case 1:
+			maskColor = vec3(0.0,1.0,0.0);
+		break;
+		case 2:
+			maskColor = vec3(0.0,0.0,1.0);
+		break;
+		case 3:
+			maskColor = vec3(0.0,1.0,1.0);
+		break;
+		case 4:
+			maskColor = vec3(1.0,0.0,1.0);
+		break;
+	}
+
+	finalColor = finalColor * maskColor;
 
 	FragColor = vec4(finalColor,alpha * opacity);
 }

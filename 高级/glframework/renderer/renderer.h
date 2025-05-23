@@ -85,6 +85,7 @@ private:
 
 	Shader* mShadowShader{ nullptr };
 	Shader* mPhongShadowShader{ nullptr };
+	Shader* mPhongCSMShadowShader{ nullptr };
 
 	//不透明物体与透明物体的队列
 	//注意！！*****每一帧绘制前，需要清空两个队列********

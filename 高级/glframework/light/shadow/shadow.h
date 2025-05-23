@@ -20,6 +20,8 @@ public:
 	float mPcfRadius{ 0.01f };
 	float mDiskTightness{ 1.0f };
 
+	float mLightSize{ 0.04f };
+
 private:
 
 };

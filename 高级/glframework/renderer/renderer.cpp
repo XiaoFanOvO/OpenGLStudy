@@ -11,9 +11,11 @@
 #include "../material/advanced/phongNormalMaterial.h"
 #include "../material/advanced/phongParallaxMaterial.h"
 #include "../material/advanced/phongShadowMaterial.h"
+#include "../material/advanced/phongCSMShadowMaterial.h"
 #include "../mesh/instancedMesh.h"
 #include "../../application/camera/orthographicCamera.h"
 #include "../light/shadow/directionalLightShadow.h"
+#include "../light/shadow/directionalLightCSMShadow.h"
 #include <string>//stl string
 #include <algorithm>
 
@@ -34,6 +36,7 @@ Renderer::Renderer() {
 	mPhongShader = new Shader("assets/shaders/advanced/phong.vert", "assets/shaders/advanced/phong.frag");
 	mShadowShader = new Shader("assets/shaders/advanced/shadow.vert", "assets/shaders/advanced/shadow.frag");
 	mPhongShadowShader = new Shader("assets/shaders/advanced/phongShadow.vert", "assets/shaders/advanced/phongShadow.frag");
+	mPhongCSMShadowShader = new Shader("assets/shaders/advanced/phongCSMShadow.vert", "assets/shaders/advanced/phongCSMShadow.frag");
 }
 
 Renderer::~Renderer() {
@@ -105,7 +108,7 @@ void Renderer::render(
 	//需要做好备份工作,特别是fbo和viewport,后面要恢复,否则影响到后面的渲染
 	//这里先做不透明物体的阴影
 	//还要做排除,postprocess不做shadowmap
-	renderShadowMap(mOpacityObjects, dirLight, dirLight->mShadow->mRenderTarget);
+	//renderShadowMap(mOpacityObjects, dirLight, dirLight->mShadow->mRenderTarget);
 
 	//3 渲染两个队列
 	for (int i = 0; i < mOpacityObjects.size(); i++) {
@@ -174,6 +177,9 @@ Shader* Renderer::pickShader(MaterialType type) {
 		break;
 	case MaterialType::PhongShadowMaterial:
 		result = mPhongShadowShader;
+		break;
+	case MaterialType::PhongCSMShadowMaterial:
+		result = mPhongCSMShadowShader;
 		break;
 	default:
 		std::cout << "Unknown material type to pick shader" << std::endl;
@@ -645,6 +651,7 @@ void Renderer::renderObject(
 
 
 			shader->setMatrix4x4("lightMatrix", dirShadow->getLightMatrix(dirLight->getModelMatrix()));
+			shader->setMatrix4x4("lightViewMatrix", glm::inverse(dirLight->getModelMatrix()));
 
 			//高光蒙版的帧更新
 			/*shader->setInt("specularMaskSampler", 1);
@@ -678,9 +685,82 @@ void Renderer::renderObject(
 			shader->setFloat("bias", dirShadow->mBias);
 			shader->setFloat("diskTightness", dirShadow->mDiskTightness);
 			shader->setFloat("pcfRadius", dirShadow->mPcfRadius);
+			shader->setFloat("lightSize", dirShadow->mLightSize);
+
+			OrthographicCamera* camera = (OrthographicCamera*)dirShadow->mCamera;
+			float frustum = camera->mR - camera->mL;
+			float nearPlane = camera->mNear;
+			shader->setFloat("frustum", frustum);
+			shader->setFloat("nearPlane", nearPlane);
 
 		}
 										break;
+		case MaterialType::PhongCSMShadowMaterial: {
+			PhongCSMShadowMaterial* phongShadowMat = (PhongCSMShadowMaterial*)material;
+			DirectionalLightCSMShadow* dirCSMShadow = (DirectionalLightCSMShadow*)dirLight->mShadow;
+			//diffuse贴图帧更新
+			//将纹理采样器与纹理单元进行挂钩
+			shader->setInt("sampler", 0);
+			//将纹理与纹理单元进行挂钩
+			phongShadowMat->mDiffuse->bind();
+
+			shader->setInt("csmLayerCount", dirCSMShadow->mLayerCount);
+
+			std::vector<float> layers;
+			dirCSMShadow->generateCascadeLayers(layers, camera->mNear, camera->mFar);
+			shader->setFloatArray("csmLayers", layers.data(), layers.size());
+
+			//shadow相关
+			/*shader->setInt("shadowMapSampler", 1);
+			dirShadow->mRenderTarget->mDepthAttachment->setUnit(1);
+			dirShadow->mRenderTarget->mDepthAttachment->bind();*/
+
+
+			/*shader->setMatrix4x4("lightMatrix", dirShadow->getLightMatrix(dirLight->getModelMatrix()));
+			shader->setMatrix4x4("lightViewMatrix", glm::inverse(dirLight->getModelMatrix()));*/
+
+			//高光蒙版的帧更新 
+			/*shader->setInt("specularMaskSampler", 1);
+			phongMat->mSpecularMask->bind();*/
+
+			//mvp
+			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+			shader->setMatrix4x4("viewMatrix", camera->getViewMatrix());
+			shader->setMatrix4x4("projectionMatrix", camera->getProjectionMatrix());
+
+			auto normalMatrix = glm::mat3(glm::transpose(glm::inverse(mesh->getModelMatrix())));
+			shader->setMatrix3x3("normalMatrix", normalMatrix);
+
+			//光源参数的uniform更新
+			//directionalLight 的更新
+			shader->setVector3("directionalLight.color", dirLight->mColor);
+			shader->setVector3("directionalLight.direction", dirLight->getDirection());
+			shader->setFloat("directionalLight.specularIntensity", dirLight->mSpecularIntensity);
+			shader->setFloat("directionalLight.intensity", dirLight->mIntensity);
+
+			shader->setFloat("shiness", phongShadowMat->mShiness);
+
+			shader->setVector3("ambientColor", ambLight->mColor);
+
+			//相机信息更新
+			shader->setVector3("cameraPosition", camera->mPosition);
+
+			//透明度
+			shader->setFloat("opacity", phongShadowMat->mOpacity);
+			//bias
+			/*shader->setFloat("bias", dirShadow->mBias);
+			shader->setFloat("diskTightness", dirShadow->mDiskTightness);
+			shader->setFloat("pcfRadius", dirShadow->mPcfRadius);
+			shader->setFloat("lightSize", dirShadow->mLightSize);*/
+
+			/*OrthographicCamera* camera = (OrthographicCamera*)dirShadow->mCamera;
+			float frustum = camera->mR - camera->mL;
+			float nearPlane = camera->mNear;
+			shader->setFloat("frustum", frustum);
+			shader->setFloat("nearPlane", nearPlane);*/
+
+		}
+											  break;
 		default:
 			break;
 		}

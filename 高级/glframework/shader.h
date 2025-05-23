@@ -15,6 +15,7 @@ public:
 	void end();//结束使用当前Shader
 
 	void setFloat(const std::string& name, float value);
+	void setFloatArray(const std::string& name, float* value, int count);
 
 	void setVector3(const std::string& name, float x, float y, float z);
 	void setVector3(const std::string& name, const float* values);

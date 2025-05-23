@@ -8,14 +8,14 @@ public:
 	~OrthographicCamera();
 
 	glm::mat4 getProjectionMatrix()override;
-	
+
 	void scale(float deltaScale)override;
 
-private://一次性赋值之后，不需要再更改了
-	float mLeft = 0.0f;
-	float mRight = 0.0f;
-	float mTop = 0.0f;
-	float mBottom = 0.0f;
+public:
+	float mL = 0.0f;
+	float mR = 0.0f;
+	float mT = 0.0f;
+	float mB = 0.0f;
 
 	float mScale{ 0.0f };
 };
