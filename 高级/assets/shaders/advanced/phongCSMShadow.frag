@@ -182,7 +182,7 @@ float pcss(vec3 lightSpacePosition, vec4 lightSpaceClipCoord, vec3 normal, vec3 
 
 uniform int csmLayerCount;
 uniform float csmLayers[20];
-uniform mat4 viewMatrix;
+uniform mat4 viewMatrix;//外界传入相机空间的视图矩阵(视角相机)
 
 //判断当前像素是位于layers中的第几层
 int getCurrentLayer(){

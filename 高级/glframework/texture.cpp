@@ -103,6 +103,39 @@ Texture* Texture::createDepthAttachment(
 	return depthTex;
 }
 
+//创建深度纹理数组
+Texture* Texture::createDepthAttachmentCSMArray(
+	unsigned int width,
+	unsigned int height,
+	unsigned int layerNum,//包含了多少张纹理
+	unsigned int unit) {
+	Texture* dTex = new Texture();
+	unsigned int depth;
+	glGenTextures(1, &depth);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, depth);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT, width, height, layerNum, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	GLfloat borderColor[] = { 1.0,1.0,1.0,1.0 };//超出的区域的深度值永远为1,也就是最大
+	glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
+	//超出的uv都采用我们设定的border值
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);//u
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);//v
+
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	dTex->mTexture = depth;
+	dTex->mWidth = width;
+	dTex->mHeight = height;
+	dTex->mUnit = unit;
+	dTex->mTextureTarget = GL_TEXTURE_2D_ARRAY;
+
+	return dTex;
+}
+
+
 Texture::Texture() {
 
 }

@@ -17,6 +17,28 @@ Framebuffer* Framebuffer::createShadowFbo(unsigned int width, unsigned int heigh
 	return fb;
 }
 
+Framebuffer* Framebuffer::createCSMShadowFbo(unsigned int width, unsigned int height, unsigned int layerNumber) {
+	Framebuffer* fb = new Framebuffer();
+
+	unsigned int fbo;
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	//加入深度附件
+	Texture* depthAttachment = Texture::createDepthAttachmentCSMArray(width, height, layerNumber, 0);
+	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthAttachment->getTexture(), 0, 0);//暂时绑定到第零层的layer
+	glDrawBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	fb->mFBO = fbo;
+	fb->mDepthAttachment = depthAttachment;
+	fb->mWidth = width;
+	fb->mHeight = height;
+
+	return fb;
+}
+
+
 Framebuffer::Framebuffer() {
 
 }

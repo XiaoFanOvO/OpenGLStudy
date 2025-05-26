@@ -6,6 +6,7 @@
 class Framebuffer {
 public:
 	static Framebuffer* createShadowFbo(unsigned int width, unsigned int height);
+	static Framebuffer* createCSMShadowFbo(unsigned int width, unsigned int height, unsigned int layerNumber);
 
 	Framebuffer();
 	Framebuffer(unsigned int width, unsigned int height);

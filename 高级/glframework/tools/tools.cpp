@@ -22,3 +22,27 @@ void Tools::decompose(
 	eulerAngle.y = glm::degrees(eulerAngle.y);
 	eulerAngle.z = glm::degrees(eulerAngle.z);
 }
+
+
+//传入一个相机的Projection * View矩阵乘积,得到对应视椎体的八个角点
+std::vector<glm::vec4> Tools::getFrustumCornersWorldSpace(const glm::mat4& projView) {
+	const auto inv = glm::inverse(projView);
+
+	std::vector<glm::vec4> corners{};
+
+	for (int x = 0; x < 2; x++)
+	{
+		for (int y = 0; y < 2; y++)
+		{
+			for (int z = 0; z < 2; z++)
+			{
+				glm::vec4 ndc = glm::vec4(2.0f * x - 1.0, 2.0f * y - 1.0, 2.0f * z - 1.0, 1.0); //将xyz从0-1变成-1-1
+				glm::vec4 p_middle = inv * ndc;
+				glm::vec4 p_world = p_middle / p_middle.w;
+				corners.push_back(p_world);
+			}
+		}
+	}
+
+	return corners;
+}

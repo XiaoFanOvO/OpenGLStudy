@@ -31,6 +31,13 @@ public:
 		unsigned int unit
 	);
 
+	static Texture* createDepthAttachmentCSMArray(
+		unsigned int width,
+		unsigned int height,
+		unsigned int layerNum,
+		unsigned int unit
+	);
+
 	Texture();
 	Texture(const std::string& path, unsigned int unit, unsigned int internalFormat = GL_RGBA);
 	Texture(
