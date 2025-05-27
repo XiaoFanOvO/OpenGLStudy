@@ -33,7 +33,7 @@ public:
 		AmbientLight* ambLight
 	);
 
-	void renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLight* dirLight, Framebuffer* fbo);
+	void renderShadowMap(Camera* camera, const std::vector<Mesh*>& meshes, DirectionalLight* dirLight);
 
 
 	//void render(

@@ -108,7 +108,7 @@ void Renderer::render(
 	//需要做好备份工作,特别是fbo和viewport,后面要恢复,否则影响到后面的渲染
 	//这里先做不透明物体的阴影
 	//还要做排除,postprocess不做shadowmap
-	//renderShadowMap(mOpacityObjects, dirLight, dirLight->mShadow->mRenderTarget);
+	renderShadowMap(camera, mOpacityObjects, dirLight);
 
 	//3 渲染两个队列
 	for (int i = 0; i < mOpacityObjects.size(); i++) {
@@ -189,7 +189,7 @@ Shader* Renderer::pickShader(MaterialType type) {
 	return result;
 }
 
-void Renderer::renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLight* dirLight, Framebuffer* fbo) {
+void Renderer::renderShadowMap(Camera* camera, const std::vector<Mesh*>& meshes, DirectionalLight* dirLight) {
 	//1 确保现在的绘制不是postProcessPass的绘制,如果是,则不执行渲染
 	bool isPostProcessPass = true;//通过查找screenmaterial
 	for (int i = 0; i < meshes.size(); i++)
@@ -219,37 +219,45 @@ void Renderer::renderShadowMap(const std::vector<Mesh*>& meshes, DirectionalLigh
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glDepthMask(GL_TRUE);
+	
+	DirectionalLightCSMShadow* csmShadow = (DirectionalLightCSMShadow*)dirLight->mShadow;
+	std::vector <float>layers;//分层信息
+	csmShadow->generateCascadeLayers(layers, camera->mNear, camera->mFar);
+	auto lightMatrices = csmShadow->getLightMatrices(camera, dirLight->getDirection(), layers);
+
 	//绑定深度图需要的FBO和视口
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo->mFBO);
-	glViewport(0, 0, fbo->mWidth, fbo->mHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, csmShadow->mRenderTarget->mFBO);
+	glViewport(0, 0, csmShadow->mRenderTarget->mWidth, csmShadow->mRenderTarget->mHeight);
 
-	//4 开始绘制
-	glClear(GL_DEPTH_BUFFER_BIT);
-	DirectionalLightShadow* dirShadow = (DirectionalLightShadow*)dirLight->mShadow;
-	auto lightMatrix = dirShadow->getLightMatrix(dirLight->getModelMatrix());
-	mShadowShader->begin();
-	mShadowShader->setMatrix4x4("lightMatrix", lightMatrix);//所有mesh共有
-	for (int i = 0; i < meshes.size(); i++)
+	//4 循环为每个子视椎体渲染shadowmap
+	for (int i = 0; i < csmShadow->mLayerCount; i++)
 	{
-		auto mesh = meshes[i];
-		auto geometry = mesh->mGeometry;
+		//从fbo->mDepthAttachment->getTexture()的texture数组中取出编号为i的图片作为当前FBO的Depth_Attachment
+		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, csmShadow->mRenderTarget->mDepthAttachment->getTexture(), 0, i);
+		glClear(GL_DEPTH_BUFFER_BIT);//很重要,每次渲染shadowmap前需要做一次清理
+		mShadowShader->begin();
+		mShadowShader->setMatrix4x4("lightMatrix", lightMatrices[i]);
 
-		glBindVertexArray(geometry->getVao());
-		mShadowShader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+		//这里其实遍历的不只是子视椎体,而是场景里所有物体,但是子视椎体以外的物体都被裁剪掉了
+		for (int i = 0; i < meshes.size(); i++)
+		{
+			auto mesh = meshes[i];
+			auto geometry = mesh->mGeometry;
 
-		//4 执行绘制命令
-		if (mesh->getType() == ObjectType::InstancedMesh) {
-			InstancedMesh* im = (InstancedMesh*)mesh;
-			glDrawElementsInstanced(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0, im->mInstanceCount);
+			glBindVertexArray(geometry->getVao());
+			mShadowShader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
+
+			//4 执行绘制命令
+			if (mesh->getType() == ObjectType::InstancedMesh) {
+				InstancedMesh* im = (InstancedMesh*)mesh;
+				glDrawElementsInstanced(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0, im->mInstanceCount);
+			}
+			else {
+				glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0);
+			}
 		}
-		else {
-			glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, 0);
-		}
+		mShadowShader->end();
 	}
-
-	mShadowShader->end();
-
-
 	//5 恢复状态
 	glBindFramebuffer(GL_FRAMEBUFFER, preFbo);
 	glViewport(preViewport[0], preViewport[1], preViewport[2], preViewport[3]);
@@ -704,24 +712,22 @@ void Renderer::renderObject(
 			//将纹理与纹理单元进行挂钩
 			phongShadowMat->mDiffuse->bind();
 
+			//CSM相关
 			shader->setInt("csmLayerCount", dirCSMShadow->mLayerCount);
 
 			std::vector<float> layers;
 			dirCSMShadow->generateCascadeLayers(layers, camera->mNear, camera->mFar);
 			shader->setFloatArray("csmLayers", layers.data(), layers.size());
+			shader->setInt("shadowMapSampler", 1);
+			dirCSMShadow->mRenderTarget->mDepthAttachment->setUnit(1);
+			dirCSMShadow->mRenderTarget->mDepthAttachment->bind();
 
-			//shadow相关
-			/*shader->setInt("shadowMapSampler", 1);
-			dirShadow->mRenderTarget->mDepthAttachment->setUnit(1);
-			dirShadow->mRenderTarget->mDepthAttachment->bind();*/
+			auto lightMatrices = dirCSMShadow->getLightMatrices(camera, dirLight->getDirection(), layers);
+			shader->setMatrix4x4Array("lightMatrices", lightMatrices.data(), lightMatrices.size());
 
-
-			/*shader->setMatrix4x4("lightMatrix", dirShadow->getLightMatrix(dirLight->getModelMatrix()));
-			shader->setMatrix4x4("lightViewMatrix", glm::inverse(dirLight->getModelMatrix()));*/
-
-			//高光蒙版的帧更新 
-			/*shader->setInt("specularMaskSampler", 1);
-			phongMat->mSpecularMask->bind();*/
+			shader->setFloat("bias", dirCSMShadow->mBias);
+			shader->setFloat("diskTightness", dirCSMShadow->mDiskTightness);
+			shader->setFloat("pcfRadius", dirCSMShadow->mPcfRadius);
 
 			//mvp
 			shader->setMatrix4x4("modelMatrix", mesh->getModelMatrix());
@@ -747,17 +753,6 @@ void Renderer::renderObject(
 
 			//透明度
 			shader->setFloat("opacity", phongShadowMat->mOpacity);
-			//bias
-			/*shader->setFloat("bias", dirShadow->mBias);
-			shader->setFloat("diskTightness", dirShadow->mDiskTightness);
-			shader->setFloat("pcfRadius", dirShadow->mPcfRadius);
-			shader->setFloat("lightSize", dirShadow->mLightSize);*/
-
-			/*OrthographicCamera* camera = (OrthographicCamera*)dirShadow->mCamera;
-			float frustum = camera->mR - camera->mL;
-			float nearPlane = camera->mNear;
-			shader->setFloat("frustum", frustum);
-			shader->setFloat("nearPlane", nearPlane);*/
 
 		}
 											  break;

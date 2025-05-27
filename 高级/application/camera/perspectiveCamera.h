@@ -11,7 +11,7 @@ public:
 
 	void scale(float deltaScale)override;
 
-private:
-	float mFovy = 0.0f;
+public:
+	float mFovy = 0.0f;//这是角度,不是弧度
 	float mAspect = 0.0f;
 };
