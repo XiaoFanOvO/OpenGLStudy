@@ -16,7 +16,8 @@ enum class MaterialType {
 	PhongNormalMaterial,
 	PhongParallaxMaterial,
 	PhongShadowMaterial,
-	PhongCSMShadowMaterial
+	PhongCSMShadowMaterial,
+	PhongPointShadowMaterial
 };
 
 class Material {

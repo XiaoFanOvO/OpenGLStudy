@@ -38,6 +38,27 @@ public:
 		unsigned int unit
 	);
 
+	static Texture* createDepthAttachmentCubeMap(
+		unsigned int width,
+		unsigned int height,
+		unsigned int unit
+	); 
+
+
+	static Texture* createMultiSampleTexture(
+		unsigned int width,
+		unsigned int height,
+		unsigned int samples,//一个像素多少个采样点
+		unsigned int format,
+		unsigned int unit
+	);
+
+	static Texture* createHDRTexture(
+		unsigned int width,
+		unsigned int height,
+		unsigned int unit
+	);
+
 	Texture();
 	Texture(const std::string& path, unsigned int unit, unsigned int internalFormat = GL_RGBA);
 	Texture(

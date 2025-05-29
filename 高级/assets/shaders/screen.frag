@@ -63,6 +63,15 @@ vec3 blur(){
 	return sumColor;
 }
 
+vec3 toneMappingReinhard(vec3 hdrColor){
+	return hdrColor / (hdrColor + vec3(1.0));
+}
+
+uniform float exposure;
+vec3 toneMappingExposure(vec3 hdrColor){
+	return (vec3(1.0) - exp(-hdrColor * exposure));
+}
+
 void main()
 {
 	//vec3 color = colorInvert(texture(screenTexSampler, uv).rgb);
@@ -72,6 +81,8 @@ void main()
 //	vec3 color = blur();
 
 	vec3 color = texture(screenTexSampler, uv).rgb;
+	//color = toneMappingReinhard(color);
+	color = toneMappingExposure(color);
 
 	//2 ×îÖÕÑÕÉ«ÒªµÖ¿¹ÆÁÄ»gamma
 	color = pow(color, vec3(1.0/2.2));

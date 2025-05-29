@@ -28,6 +28,7 @@
 #include "glframework/material/advanced/phongParallaxMaterial.h"
 #include "glframework/material/advanced/phongShadowMaterial.h"
 #include "glframework/material/advanced/phongCSMShadowMaterial.h"
+#include "glframework/material/advanced/phongPointShadowMaterial.h"
 
 
 #include "glframework/mesh/mesh.h"
@@ -52,13 +53,14 @@ Scene* sceneOff = nullptr;
 Scene* scene = nullptr;
 Framebuffer* fbo = nullptr;
 
+ScreenMaterial* screenMat = nullptr;
+
 Mesh* upPlane = nullptr;
 
 int WIDTH = 2560;
 int HEIGHT = 1440;
 
-//灯光们
-DirectionalLight* dirLight = nullptr;
+PointLight* pointLight = nullptr;
 
 AmbientLight* ambLight = nullptr;
 
@@ -94,44 +96,73 @@ void OnScroll(double offset) {
 
 
 void prepare() {
-	fbo = new Framebuffer(WIDTH, HEIGHT);
+	fbo = Framebuffer::createHDRFbo(WIDTH, HEIGHT);
+	//fbo = new Framebuffer(WIDTH, HEIGHT);
 
 	renderer = new Renderer();
 	sceneOff = new Scene();
 	scene = new Scene();
 
 	//pass 01
-	auto groundGeo = Geometry::createPlane(20, 500);
-	auto mat = new PhongCSMShadowMaterial();
-	mat->mDiffuse = new Texture("assets/textures/wall.jpg", 0, GL_SRGB_ALPHA);
-	mat->mShiness = 32;
+	auto roomGeo = Geometry::createBox(20, true);
+	auto roomMat = new PhongPointShadowMaterial();
+	roomMat->mDiffuse = new Texture("assets/textures/wall.jpg", 0, GL_SRGB_ALPHA);;
+	roomMat->mShiness = 32;
 
-	auto groundMesh = new Mesh(groundGeo, mat);
-	groundMesh->setPosition(glm::vec3(0.0, 0.0, 0.0f));
-	groundMesh->rotateX(-90.0f);
-	sceneOff->addChild(groundMesh);
+	auto roomMesh = new Mesh(roomGeo, roomMat);
+	sceneOff->addChild(roomMesh);
 
-	for (int i = 0; i < 50; i++) {
-		auto geo = Geometry::createBox(1.5);
-		auto mesh = new Mesh(geo, mat);
-		mesh->setPosition(glm::vec3(i % 3 * 3, 0.0, -i / 3 * 3));
-		sceneOff->addChild(mesh);
+	//box 们
+	auto boxGeo = Geometry::createBox(2);
+	auto boxMat = new PhongPointShadowMaterial();
+	boxMat->mDiffuse = new Texture("assets/textures/box.png", 0, GL_SRGB_ALPHA);;
+	boxMat->mShiness = 32; 
+
+	int lineSize = 6;
+	for (int i = 0; i < lineSize; i++) {
+		auto boxMesh = new Mesh(boxGeo, boxMat);
+		boxMesh->setPosition(glm::vec3(3.0f, 0.0f, i * 2.0f));
+		boxMesh->setScale(glm::vec3(1.0, 2.0, 1.0));
+		sceneOff->addChild(boxMesh);
+	}
+
+	for (int i = 0; i < lineSize; i++) {
+		auto boxMesh = new Mesh(boxGeo, boxMat);
+		boxMesh->setPosition(glm::vec3(-3.0f, 0.0f, i * 2.0f));
+		boxMesh->setScale(glm::vec3(1.0, 2.0, 1.0));
+		sceneOff->addChild(boxMesh);
+	}
+
+	for (int i = 0; i < lineSize; i++) {
+		auto boxMesh = new Mesh(boxGeo, boxMat);
+		boxMesh->setPosition(glm::vec3(0.0f, 2.0f, i * 2.0f));
+		boxMesh->setScale(glm::vec3(2.0, 1.0, 1.0));
+		sceneOff->addChild(boxMesh);
+	}
+
+	for (int i = 0; i < lineSize; i++) {
+		auto boxMesh = new Mesh(boxGeo, boxMat);
+		boxMesh->setPosition(glm::vec3(0.0f, -2.0f, i * 2.0f));
+		boxMesh->setScale(glm::vec3(2.0, 1.0, 1.0));
+		sceneOff->addChild(boxMesh);
 	}
 
 	//pass 02 postProcessPass:后处理pass
 	auto sgeo = Geometry::createScreenPlane();
-	auto smat = new ScreenMaterial();
-	smat->mScreenTexture = fbo->mColorAttachment;
-	auto smesh = new Mesh(sgeo, smat);
+	screenMat = new ScreenMaterial();
+	screenMat->mScreenTexture = fbo->mColorAttachment;
+	auto smesh = new Mesh(sgeo, screenMat);
 	scene->addChild(smesh);
 
 
-	dirLight = new DirectionalLight();
-	dirLight->setPosition(glm::vec3(10.0f, 10.0f, 0.0f));
-	dirLight->rotateX(-45.0f);
-	dirLight->rotateY(45.0f);
-	dirLight->mSpecularIntensity = 0.5f;
-
+	pointLight = new PointLight();
+	pointLight->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+	pointLight->mSpecularIntensity = 1.0f;
+	pointLight->mK2 = 0.0017f;
+	pointLight->mK1 = 0.07f;
+	pointLight->mKc = 1.0f;
+	pointLight->mColor = glm::vec3(100, 120, 150);
+	 
 	ambLight = new AmbientLight();
 	ambLight->mColor = glm::vec3(0.1f);
 
@@ -173,19 +204,10 @@ void renderIMGUI() {
 
 	//2 决定当前的GUI上面有哪些控件，从上到下
 	ImGui::Begin("MaterialEditor");
-	ImGui::SliderFloat("bias:", &dirLight->mShadow->mBias, 0.0f, 0.01f, "%.4f");
-	ImGui::SliderFloat("tightness:", &dirLight->mShadow->mDiskTightness, 0.0f, 5.0f, "%.3f");
-	ImGui::SliderFloat("pcfRadius:", &dirLight->mShadow->mPcfRadius, 0.0f, 1.0f, "%.4f");
-
-	/*int width = dirLight->mShadow->mRenderTarget->mWidth;
-	int height = dirLight->mShadow->mRenderTarget->mHeight;
-	if (
-		ImGui::SliderInt("FBO width:", &width, 1, 4096) ||
-		ImGui::SliderInt("FBO height:", &height, 1, 4096)
-		) {
-		dirLight->mShadow->setRenderTargetSize(width, height);
-	}*/
-	ImGui::SliderFloat("Light Size:", &dirLight->mShadow->mLightSize, 0.0f, 10.0f);
+	ImGui::SliderFloat("bias:", &pointLight->mShadow->mBias, 0.0f, 0.01f, "%.4f");
+	ImGui::SliderFloat("tightness:", &pointLight->mShadow->mDiskTightness, 0.0f, 5.0f, "%.3f");
+	ImGui::SliderFloat("pcfRadius:", &pointLight->mShadow->mPcfRadius, 0.0f, 1.0f, "%.4f");
+	ImGui::SliderFloat("exposure:", &screenMat->mExposure, 0.0f, 10.0f);
 
 	ImGui::End();
 
@@ -200,24 +222,6 @@ void renderIMGUI() {
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool goUp = true;
-void transform() {
-	auto pos = upPlane->getPosition();
-	if (goUp) {
-		pos.y += 0.05;
-		upPlane->setPosition(pos);
-		if (pos.y > 10) {
-			goUp = false;
-		}
-	}
-	else {
-		pos.y -= 0.05;
-		upPlane->setPosition(pos);
-		if (pos.y < 0.2) {
-			goUp = true;
-		}
-	}
-}
 
 int main() {
 	if (!glApp->init(WIDTH, HEIGHT)) {
@@ -242,11 +246,10 @@ int main() {
 
 	while (glApp->update()) {
 		cameraControl->update();
-		//transform();
 
 		renderer->setClearColor(clearColor);
-		renderer->render(sceneOff, camera, dirLight, ambLight, fbo->mFBO);
-		renderer->render(scene, camera, dirLight, ambLight);
+		renderer->render(sceneOff, camera, pointLight, ambLight, fbo->mFBO);
+		renderer->render(scene, camera, pointLight, ambLight);
 
 		renderIMGUI();
 	}

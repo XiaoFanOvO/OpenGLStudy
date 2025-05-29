@@ -188,7 +188,7 @@ Geometry::~Geometry() {
 	}
 }
 
-Geometry* Geometry::createBox(float size) {
+Geometry* Geometry::createBox(float size, bool invNormal) {
 	Geometry* geometry = new Geometry();
 	geometry->mIndicesCount = 36;
 
@@ -218,41 +218,42 @@ Geometry* Geometry::createBox(float size) {
 		0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
 	};
 
+	float inv = invNormal ? -1.0 : 1.0;
 	float normals[] = {
 		//前面
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f * inv,
+		0.0f, 0.0f, 1.0f * inv,
+		0.0f, 0.0f, 1.0f * inv,
+		0.0f, 0.0f, 1.0f * inv,
 		//后面
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f * inv,
+		0.0f, 0.0f, -1.0f * inv,
+		0.0f, 0.0f, -1.0f * inv,
+		0.0f, 0.0f, -1.0f * inv,
 
 		//上面
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f * inv, 0.0f,
+		0.0f, 1.0f * inv, 0.0f,
+		0.0f, 1.0f * inv, 0.0f,
+		0.0f, 1.0f * inv, 0.0f,
 
 		//下面
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f * inv, 0.0f,
+		0.0f, -1.0f * inv, 0.0f,
+		0.0f, -1.0f * inv, 0.0f,
+		0.0f, -1.0f * inv, 0.0f,
 
 		//右面
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
+		1.0f * inv, 0.0f, 0.0f,
+		1.0f * inv, 0.0f, 0.0f,
+		1.0f * inv, 0.0f, 0.0f,
+		1.0f * inv, 0.0f, 0.0f,
 
 		//左面
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
+		-1.0f * inv, 0.0f, 0.0f,
+		-1.0f * inv, 0.0f, 0.0f,
+		-1.0f * inv, 0.0f, 0.0f,
+		-1.0f * inv, 0.0f, 0.0f,
 	};
 
 	float tangents[] = {

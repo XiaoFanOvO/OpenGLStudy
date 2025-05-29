@@ -21,7 +21,7 @@ public:
 	void render(
 		Scene* scene,
 		Camera* camera,
-		DirectionalLight* dirLight,
+		PointLight* pointLight,
 		AmbientLight* ambLight,
 		unsigned int fbo = 0
 	);
@@ -29,11 +29,11 @@ public:
 	void renderObject(
 		Object* object,
 		Camera* camera,
-		DirectionalLight* dirLight,
+		PointLight* pointLight,
 		AmbientLight* ambLight
 	);
 
-	void renderShadowMap(Camera* camera, const std::vector<Mesh*>& meshes, DirectionalLight* dirLight);
+	void renderShadowMap(Camera* camera, const std::vector<Mesh*>& meshes, PointLight* pointLight);
 
 
 	//void render(
@@ -51,6 +51,8 @@ public:
 	//);
 
 	void setClearColor(glm::vec3 color);
+
+	void msaaResolve(Framebuffer* src, Framebuffer* dst);
 
 public:
 	Material* mGlobalMaterial{ nullptr };
@@ -86,6 +88,10 @@ private:
 	Shader* mShadowShader{ nullptr };
 	Shader* mPhongShadowShader{ nullptr };
 	Shader* mPhongCSMShadowShader{ nullptr };
+
+	//点光源相关
+	Shader* mShadowDistanceShader{ nullptr };
+	Shader* mPhongPointShadowShader{ nullptr };
 
 	//不透明物体与透明物体的队列
 	//注意！！*****每一帧绘制前，需要清空两个队列********

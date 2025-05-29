@@ -135,6 +135,93 @@ Texture* Texture::createDepthAttachmentCSMArray(
 	return dTex;
 }
 
+Texture* Texture::createDepthAttachmentCubeMap(
+	unsigned int width,
+	unsigned int height,
+	unsigned int unit
+) {
+	Texture* dTex = new Texture();
+	unsigned int depth;
+	glGenTextures(1, &depth);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, depth);
+
+	for (int i = 0; i < 6; i++)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);//u
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);//v
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);//r
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+	dTex->mTexture = depth;
+	dTex->mWidth = width;
+	dTex->mHeight = height;
+	dTex->mUnit = unit;
+	dTex->mTextureTarget = GL_TEXTURE_CUBE_MAP;
+
+	return dTex;
+
+}
+
+Texture* Texture::createMultiSampleTexture(
+	unsigned int width,
+	unsigned int height,
+	unsigned int samples,//一个像素多少个采样点
+	unsigned int format,//格式 颜色 深度 模板 都可以有
+	unsigned int unit
+) {
+Texture* tex = new Texture();
+	GLuint glTex;
+	glGenTextures(1, &glTex);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, glTex);
+
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, format, width, height, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	//这里现在没有必要指定过滤方式,后面降采样的时候会指定
+	//而且采样范围肯定不会超过0-1之外
+
+	tex->mTexture = glTex;
+	tex->mWidth = width;
+	tex->mHeight = height;
+	tex->mUnit = unit;
+	tex->mTextureTarget = GL_TEXTURE_2D_MULTISAMPLE;
+
+	return tex;
+}
+
+Texture* Texture::createHDRTexture(
+	unsigned int width,
+	unsigned int height,
+	unsigned int unit
+) {
+	Texture* tex = new Texture();
+
+	GLuint glTex;
+	glGenTextures(1, &glTex);
+	glBindTexture(GL_TEXTURE_2D, glTex);
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
+
+	tex->mTexture = glTex;
+	tex->mWidth = width;
+	tex->mHeight = height;
+	tex->mUnit = unit;
+	tex->mTextureTarget = GL_TEXTURE_2D;
+
+	return tex;
+
+}
+
 
 Texture::Texture() {
 

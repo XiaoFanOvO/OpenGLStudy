@@ -2,7 +2,7 @@
 #include "light.h"
 #include "../object.h"
 
-class PointLight :public Light , public Object{
+class PointLight :public Light{
 public:
 	PointLight();
 	~PointLight();

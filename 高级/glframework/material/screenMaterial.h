@@ -9,4 +9,6 @@ public:
 
 public:
 	Texture* mScreenTexture{ nullptr };
+
+	float mExposure{ 1.0f };
 };

@@ -30,7 +30,7 @@ public:
 
 	~Geometry();
 
-	static Geometry* createBox(float size);
+	static Geometry* createBox(float size, bool invNormal = false);// invNormal 是否需要反转法线
 	static Geometry* createSphere(float radius);
 	static Geometry* createPlane(float width, float height);
 	static Geometry* createScreenPlane();
