@@ -175,7 +175,7 @@ Texture* Texture::createMultiSampleTexture(
 	unsigned int format,//格式 颜色 深度 模板 都可以有
 	unsigned int unit
 ) {
-Texture* tex = new Texture();
+	Texture* tex = new Texture();
 	GLuint glTex;
 	glGenTextures(1, &glTex);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, glTex);
@@ -204,13 +204,13 @@ Texture* Texture::createHDRTexture(
 	GLuint glTex;
 	glGenTextures(1, &glTex);
 	glBindTexture(GL_TEXTURE_2D, glTex);
-	
+
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//u
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//v
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);//u
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);//v
 
 	tex->mTexture = glTex;
 	tex->mWidth = width;
@@ -247,10 +247,10 @@ Texture::Texture(const std::string& path, unsigned int unit, unsigned int intern
 	//3 传输纹理数据,开辟显存
 	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	
-//	glGenerateMipmap(GL_TEXTURE_2D);
 
-	//***释放数据 
+	//	glGenerateMipmap(GL_TEXTURE_2D);
+
+		//***释放数据 
 	stbi_image_free(data);
 
 	//4 设置纹理的过滤方式

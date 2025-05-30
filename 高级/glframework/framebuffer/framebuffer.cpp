@@ -107,6 +107,30 @@ Framebuffer* Framebuffer::createHDRFbo(unsigned int width, unsigned int height) 
 	return fb;
 }
 
+Framebuffer* Framebuffer::createHDRBloomFbo(unsigned int width, unsigned int height) {
+	Framebuffer* fb = new Framebuffer();
+
+	unsigned int fbo;
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	auto colorAttachment = Texture::createHDRTexture(width, height, 0);
+	//auto dsAttachment = Texture::createDepthStencilAttachment(width, height, 0);// bloom只需要颜色
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment->getTexture(), 0);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, dsAttachment->getTexture(), 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	fb->mFBO = fbo;
+	//fb->mDepthStencilAttachment = dsAttachment;
+	fb->mColorAttachment = colorAttachment;
+	fb->mWidth = width;
+	fb->mHeight = height;
+
+	return fb;
+}
+
 Framebuffer::Framebuffer() {
 
 }

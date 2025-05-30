@@ -48,7 +48,11 @@
 
 #include "application/assimpInstanceLoader.h"
 
+#include "glframework/renderer/bloom.h"
+
 Renderer* renderer = nullptr;
+Bloom* bloom = nullptr;
+
 Scene* sceneOff = nullptr;
 Scene* scene = nullptr;
 Framebuffer* fbo = nullptr;
@@ -100,6 +104,7 @@ void prepare() {
 	//fbo = new Framebuffer(WIDTH, HEIGHT);
 
 	renderer = new Renderer();
+	bloom = new Bloom(WIDTH, HEIGHT);
 	sceneOff = new Scene();
 	scene = new Scene();
 
@@ -161,10 +166,10 @@ void prepare() {
 	pointLight->mK2 = 0.0017f;
 	pointLight->mK1 = 0.07f;
 	pointLight->mKc = 1.0f;
-	pointLight->mColor = glm::vec3(100, 120, 150);
+	pointLight->mColor = glm::vec3(20, 20, 20);
 	 
 	ambLight = new AmbientLight();
-	ambLight->mColor = glm::vec3(0.1f);
+	ambLight->mColor = glm::vec3(0.3f);
 
 }
 
@@ -208,6 +213,10 @@ void renderIMGUI() {
 	ImGui::SliderFloat("tightness:", &pointLight->mShadow->mDiskTightness, 0.0f, 5.0f, "%.3f");
 	ImGui::SliderFloat("pcfRadius:", &pointLight->mShadow->mPcfRadius, 0.0f, 1.0f, "%.4f");
 	ImGui::SliderFloat("exposure:", &screenMat->mExposure, 0.0f, 10.0f);
+	ImGui::SliderFloat("Threshold:", &bloom->mThreshold, 0.0f, 100.0f);
+	ImGui::SliderFloat("BloomAttenuation:", &bloom->mBloomAttenuation, 0.0f, 1.0f);
+	ImGui::SliderFloat("BloomIntensity:", &bloom->mBloomIntensity, 0.0f, 1.0f);
+	ImGui::SliderFloat("BloomRadius:", &bloom->mBloomRadius, 0.0f, 1.0f);
 
 	ImGui::End();
 
@@ -249,6 +258,7 @@ int main() {
 
 		renderer->setClearColor(clearColor);
 		renderer->render(sceneOff, camera, pointLight, ambLight, fbo->mFBO);
+		bloom->doBloom(fbo);
 		renderer->render(scene, camera, pointLight, ambLight);
 
 		renderIMGUI();

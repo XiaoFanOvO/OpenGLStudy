@@ -10,6 +10,7 @@ public:
 	static Framebuffer* createPointShadowFBO(unsigned int width, unsigned int height);
 	static Framebuffer* createMultiSampleFbo(unsigned int width, unsigned int height, unsigned int samples);
 	static Framebuffer* createHDRFbo(unsigned int width, unsigned int height);
+	static Framebuffer* createHDRBloomFbo(unsigned int width, unsigned int height);
 
 	Framebuffer();
 	Framebuffer(unsigned int width, unsigned int height);
